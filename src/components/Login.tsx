@@ -48,7 +48,9 @@ function Login() {
             required
           />
 
-          <button type="submit">Continue</button>
+          <button className="btn" type="submit">
+            Continue
+          </button>
         </form>
 
         <footer>

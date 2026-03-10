@@ -126,7 +126,7 @@ function Signup() {
             required
           />
 
-          <button type="submit" onClick={handleRegister}>
+          <button className="btn" type="submit" onClick={handleRegister}>
             Create account
           </button>
         </form>
