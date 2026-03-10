@@ -296,7 +296,7 @@ a:hover {
 }
 
 .workspace-header h1 {
-  font-size: clamp(1.8rem, 3vw, 2.2rem);
+  font-size: clamp(1.55rem, 2.4vw, 2rem);
   margin-bottom: 0.35rem;
 }
 
@@ -330,62 +330,96 @@ a:hover {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .panel-head h2 {
   margin: 0;
 }
 
+.panel-head-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.panel-title-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.panel-title-stack h2 {
+  font-size: 1.55rem;
+}
+
+.panel-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.panel-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #8b87a2;
+}
+
 .panel-actions {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 }
 
-.detail-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
+.panel-status-pill {
+  padding: 0.15rem 0.65rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .menu-detail-view {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  padding-right: 0.25rem;
-}
-
-.menu-detail-view__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 1rem;
+  padding-right: 0.25rem;
 }
 
 .back-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   border-radius: 999px;
-  border: 1px solid rgba(124, 58, 237, 0.25);
-  padding: 0.4rem 0.9rem;
-  font-size: 0.85rem;
-  color: var(--primary);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary-dark);
   background: rgba(124, 58, 237, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  width: 100%;
+  justify-content: center;
 }
 
 .back-link:hover {
-  background: rgba(124, 58, 237, 0.15);
+  background: rgba(124, 58, 237, 0.14);
 }
 
-.menu-detail-view__hero h2 {
-  margin: 0.2rem 0 0;
-  font-size: clamp(1.6rem, 3vw, 2.1rem);
-}
-
-.menu-detail-view__hero .muted-label {
-  font-size: 1rem;
+.back-link-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--primary);
+  box-shadow: 0 6px 12px rgba(91, 33, 182, 0.15);
 }
 
 .list-card {
@@ -464,8 +498,13 @@ a:hover {
 .menu-detail-meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.menu-detail-price {
+  font-weight: 600;
+  color: #1f1d2b;
 }
 
 .availability {
@@ -509,7 +548,7 @@ a:hover {
 
 .runs-grid {
   display: grid;
-  grid-template-columns: 0.85fr 1.15fr;
+  grid-template-columns: 1fr;
   gap: 1rem;
   min-height: 0;
   height: 100%;
@@ -521,6 +560,8 @@ a:hover {
   gap: 0.8rem;
   min-height: 0;
   height: 100%;
+  padding-top: 0.4rem;
+  padding-bottom: 0.2rem;
 }
 
 .scrollable {
@@ -565,37 +606,18 @@ a:hover {
 }
 
 .run-detail {
-  border: 1px solid rgba(31, 29, 43, 0.08);
-  border-radius: 24px;
-  padding: 1.4rem;
-  background: linear-gradient(180deg, #ffffff 0%, #f9f8ff 100%);
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   min-height: 0;
   height: 100%;
   overflow: hidden;
-  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.08);
 }
 
-.run-detail-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.run-detail-header h2 {
-  margin: 0;
-  font-size: clamp(1.3rem, 3vw, 1.8rem);
-  color: #1f1d2b;
-}
-
-.run-detail-eyebrow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
 
 .menu-section {
   display: flex;
@@ -625,7 +647,7 @@ a:hover {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 0.35rem;
+  padding: 0.35rem 0.35rem 0.2rem 0;
 }
 
 .muted-label {

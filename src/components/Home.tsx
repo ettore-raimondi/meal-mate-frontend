@@ -1,31 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-
-type MenuItem = {
-  id: string;
-  name: string;
-  price: string;
-  available: boolean;
-  description: string;
-};
-
-type Restaurant = {
-  id: string;
-  name: string;
-  location: string;
-  cuisine: string;
-  menu: MenuItem[];
-};
-
-type FoodRun = {
-  id: string;
-  name: string;
-  restaurantId: string;
-  organizer: string;
-  cutoff: string;
-  status: "Open" | "Closed" | "Draft";
-  orders: number;
-  eta: string;
-};
+import { useNavigate, useParams } from "react-router-dom";
+import MenuItemDetail from "./MenuItemDetail";
+import RunDetailView from "./RunDetailView";
+import RunList from "./RunList";
+import { FoodRun, MenuItem, PanelView, Restaurant } from "./homeTypes";
 
 const restaurants: Restaurant[] = [
   {
@@ -138,10 +116,37 @@ const runs: FoodRun[] = [
   },
 ];
 
+const RUN_PREFIX = "run-";
+const MENU_PREFIX = "m-";
+
+const toRouteRunSegment = (id: string) => id.replace(/^run-/i, "");
+const toRouteMenuSegment = (id: string) => id.replace(/^m-/i, "");
+
+const fromRouteRunSegment = (segment?: string) => {
+  if (!segment) {
+    return undefined;
+  }
+  return segment.startsWith(RUN_PREFIX) ? segment : `${RUN_PREFIX}${segment}`;
+};
+
+const fromRouteMenuSegment = (segment?: string) => {
+  if (!segment) {
+    return undefined;
+  }
+  return segment.startsWith(MENU_PREFIX) ? segment : `${MENU_PREFIX}${segment}`;
+};
+
 function Home() {
   const [activeRunId, setActiveRunId] = useState(runs[0]?.id ?? "");
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
-  const [isMenuDetailOpen, setIsMenuDetailOpen] = useState(false);
+  const navigate = useNavigate();
+  const { runNumber, menuItemNumber } = useParams<{
+    runNumber?: string;
+    menuItemNumber?: string;
+  }>();
+  const routeRunId = fromRouteRunSegment(runNumber);
+  const routeMenuItemId = fromRouteMenuSegment(menuItemNumber);
+  const effectiveRunId = routeRunId ?? activeRunId;
 
   const restaurantMap = useMemo(() => {
     const map = new Map<string, Restaurant>();
@@ -150,38 +155,137 @@ function Home() {
   }, []);
 
   const activeRun = useMemo(
-    () => runs.find((run) => run.id === activeRunId),
-    [activeRunId],
+    () => runs.find((run) => run.id === effectiveRunId),
+    [effectiveRunId],
   );
   const runRestaurant = activeRun
     ? restaurantMap.get(activeRun.restaurantId)
     : undefined;
   const menuItems = runRestaurant?.menu ?? [];
-  const activeMenuItem = menuItems.find((item) => item.id === activeItemId);
+  const effectiveMenuItemId = routeMenuItemId ?? activeItemId;
+  const activeMenuItem = menuItems.find(
+    (item) => item.id === effectiveMenuItemId,
+  );
+
+  const panelView: PanelView = routeRunId
+    ? routeMenuItemId
+      ? "menuDetail"
+      : "runDetail"
+    : "runs";
+
+  const handleRunSelect = (id: string) => {
+    setActiveRunId(id);
+    navigate(`/home/run/${toRouteRunSegment(id)}`);
+  };
+
+  const handleBackToRuns = () => {
+    navigate("/home");
+  };
 
   const openMenuDetail = (itemId: string) => {
+    const targetRunId = routeRunId ?? activeRunId ?? runs[0]?.id;
+    if (!targetRunId) {
+      return;
+    }
     setActiveItemId(itemId);
-    setIsMenuDetailOpen(true);
+    navigate(
+      `/home/run/${toRouteRunSegment(targetRunId)}/menu-item/${toRouteMenuSegment(itemId)}`,
+    );
   };
 
   const closeMenuDetail = () => {
-    setIsMenuDetailOpen(false);
+    const targetRunId = routeRunId ?? activeRunId;
+    if (targetRunId) {
+      navigate(`/home/run/${toRouteRunSegment(targetRunId)}`);
+    } else {
+      navigate("/home");
+    }
   };
+
+  const panelTitle = (() => {
+    if (panelView === "runDetail" && activeRun) {
+      return activeRun.name;
+    }
+    if (panelView === "menuDetail" && activeMenuItem) {
+      return activeMenuItem.name;
+    }
+    return "Open Runs";
+  })();
+
+  const panelSubtitle = (() => {
+    if (panelView === "runDetail") {
+      return runRestaurant
+        ? `${runRestaurant.name} · ${runRestaurant.cuisine}`
+        : "Review the selected run";
+    }
+    if (panelView === "menuDetail" && activeMenuItem) {
+      const restaurantLabel = runRestaurant ? `${runRestaurant.name}` : "";
+      const priceLabel = activeMenuItem.price;
+      return restaurantLabel
+        ? `${restaurantLabel} · ${priceLabel}`
+        : priceLabel;
+    }
+    return "Track active runs and place orders.";
+  })();
+
+  const backButton = (() => {
+    if (panelView === "runDetail") {
+      return { label: "Back to runs", onClick: handleBackToRuns };
+    }
+    if (panelView === "menuDetail") {
+      return { label: "Back to menu", onClick: closeMenuDetail };
+    }
+    return null;
+  })();
+
+  useEffect(() => {
+    if (routeRunId) {
+      const runExists = runs.some((run) => run.id === routeRunId);
+      if (runExists && activeRunId !== routeRunId) {
+        setActiveRunId(routeRunId);
+      } else if (!runExists) {
+        navigate("/home", { replace: true });
+      }
+    }
+  }, [routeRunId, activeRunId, navigate, runs]);
+
+  useEffect(() => {
+    if (!routeRunId && !activeRunId && runs.length > 0) {
+      setActiveRunId(runs[0].id);
+    }
+  }, [routeRunId, activeRunId, runs]);
 
   useEffect(() => {
     if (menuItems.length === 0) {
-      setActiveItemId(null);
-      setIsMenuDetailOpen(false);
+      if (activeItemId !== null) {
+        setActiveItemId(null);
+      }
+      if (routeMenuItemId && routeRunId) {
+        navigate(`/home/run/${toRouteRunSegment(routeRunId)}`, {
+          replace: true,
+        });
+      }
       return;
     }
-    setActiveItemId((prev) => {
-      if (prev && menuItems.some((item) => item.id === prev)) {
-        return prev;
+
+    if (routeMenuItemId) {
+      const exists = menuItems.some((item) => item.id === routeMenuItemId);
+      if (exists) {
+        if (activeItemId !== routeMenuItemId) {
+          setActiveItemId(routeMenuItemId);
+        }
+      } else if (routeRunId) {
+        navigate(`/home/run/${toRouteRunSegment(routeRunId)}`, {
+          replace: true,
+        });
       }
-      return menuItems[0].id;
-    });
-    setIsMenuDetailOpen(false);
-  }, [menuItems]);
+      return;
+    }
+
+    if (!activeItemId || !menuItems.some((item) => item.id === activeItemId)) {
+      setActiveItemId(menuItems[0].id);
+    }
+  }, [menuItems, routeMenuItemId, routeRunId, navigate, activeItemId]);
 
   return (
     <div className="dashboard">
@@ -202,163 +306,70 @@ function Home() {
       </aside>
 
       <div className="workspace">
-        <header className="workspace-header">
-          <div>
-            <p className="eyebrow">Operations hub</p>
-            <h1>Manage runs and keep orders flowing</h1>
-            <p>
-              Spin up new runs, monitor activity, and place orders in one place.
-            </p>
-          </div>
-          <div className="header-actions">
-            <button className="btn btn-outline">Create Restaurant</button>
-          </div>
-        </header>
-
         <section className="panel runs-panel full-panel">
           <div className="panel-head">
-            <div>
-              <h2>Open Runs</h2>
-              <p>Track active runs and place orders.</p>
+            <div className="panel-head-main">
+              {backButton && (
+                <button
+                  className="back-link"
+                  onClick={backButton.onClick}
+                  type="button"
+                >
+                  <span className="back-link-icon" aria-hidden="true">
+                    ←
+                  </span>
+                  <span>{backButton.label}</span>
+                </button>
+              )}
+              <div className="panel-title-stack">
+                <div className="panel-title-row">
+                  <h2>{panelTitle}</h2>
+                  {panelView === "runDetail" && activeRun && (
+                    <span
+                      className={`status-pill panel-status-pill ${activeRun.status === "Open" ? "success" : "muted"}`}
+                    >
+                      {activeRun.status}
+                    </span>
+                  )}
+                </div>
+                {panelSubtitle && (
+                  <p className="panel-subtitle">{panelSubtitle}</p>
+                )}
+              </div>
             </div>
-            <button className="btn btn-ghost">New Run</button>
+
+            <div className="panel-actions">
+              {panelView === "runs" && (
+                <button className="btn btn-ghost">New Run</button>
+              )}
+            </div>
           </div>
 
           <div className="runs-grid">
-            <div className="runs-list scrollable">
-              {runs.map((run) => {
-                const runRest = restaurantMap.get(run.restaurantId);
-                return (
-                  <button
-                    key={run.id}
-                    className={`list-card run-card ${run.id === activeRunId ? "is-active" : ""}`}
-                    onClick={() => setActiveRunId(run.id)}
-                  >
-                    <div className="run-card-head">
-                      <h3>{run.name}</h3>
-                      <span
-                        className={`status-pill ${run.status === "Open" ? "success" : "muted"}`}
-                      >
-                        {run.status}
-                      </span>
-                    </div>
-                    <p>{runRest?.name}</p>
-                    <div className="run-meta">
-                      <span>{run.cutoff}</span>
-                      <span>{run.orders} orders</span>
-                      <span>{run.eta}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            {panelView === "runs" && (
+              <RunList
+                runs={runs}
+                activeRunId={effectiveRunId ?? ""}
+                restaurantMap={restaurantMap}
+                onSelect={handleRunSelect}
+              />
+            )}
 
-            <div className="run-detail scrollable">
-              {isMenuDetailOpen && activeMenuItem ? (
-                <section className="menu-detail-view">
-                  <div className="menu-detail-view__top">
-                    <button
-                      className="back-link"
-                      onClick={closeMenuDetail}
-                      type="button"
-                    >
-                      ← Back to menu
-                    </button>
-                    {runRestaurant && (
-                      <span className="muted-label">
-                        {runRestaurant.name} · {runRestaurant.cuisine}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="menu-detail-view__hero">
-                    <p className="eyebrow">Menu item</p>
-                    <h2>{activeMenuItem.name}</h2>
-                    <p className="muted-label">{activeMenuItem.price}</p>
-                  </div>
-
-                  <p className="menu-detail-description menu-detail-description--large">
-                    {activeMenuItem.description}
-                  </p>
-
-                  <div className="menu-detail-meta">
-                    <span
-                      className={`availability ${activeMenuItem.available ? "is-available" : "is-soldout"}`}
-                    >
-                      {activeMenuItem.available ? "In stock" : "Sold out"}
-                    </span>
-                    <button className="btn">Add to order</button>
-                  </div>
-                </section>
-              ) : (
-                <>
-                  <header className="run-detail-header">
-                    <div className="run-detail-eyebrow">
-                      <p className="eyebrow">Run detail</p>
-                      {activeRun && (
-                        <span
-                          className={`status-pill ${activeRun.status === "Open" ? "success" : "muted"}`}
-                        >
-                          {activeRun.status}
-                        </span>
-                      )}
-                    </div>
-                    <h2>{activeRun?.name ?? "Select a run"}</h2>
-                  </header>
-
-                  <section className="menu-section">
-                    <div className="menu-section-head">
-                      <div>
-                        <h4>Menu</h4>
-                        <p className="muted-label">
-                          {runRestaurant
-                            ? `Favorites from ${runRestaurant.name}`
-                            : "Select a run to preview the menu"}
-                        </p>
-                      </div>
-                      <span className="muted-label">
-                        {menuItems.length} item
-                        {menuItems.length === 1 ? "" : "s"}
-                      </span>
-                    </div>
-
-                    <div className="menu-grid">
-                      {menuItems.length > 0 ? (
-                        menuItems.map((item) => (
-                          <article
-                            key={`${activeRun?.id ?? "run"}-${item.id}`}
-                            className={`menu-card list-card list-card--inline ${item.id === activeItemId ? "is-active" : ""}`}
-                            onClick={() => openMenuDetail(item.id)}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                openMenuDetail(item.id);
-                              }
-                            }}
-                          >
-                            <div className="menu-card-info">
-                              <h4>{item.name}</h4>
-                              <p>{item.price}</p>
-                            </div>
-                            <button
-                              className="btn btn-ghost btn-icon"
-                              aria-label={`Add ${item.name} to order`}
-                              type="button"
-                            >
-                              +
-                            </button>
-                          </article>
-                        ))
-                      ) : (
-                        <p className="muted-label">Menu coming soon.</p>
-                      )}
-                    </div>
-                  </section>
-                </>
-              )}
-            </div>
+            {panelView !== "runs" && (
+              <div className="run-detail scrollable">
+                {panelView === "menuDetail" && activeMenuItem ? (
+                  <MenuItemDetail menuItem={activeMenuItem} />
+                ) : (
+                  <RunDetailView
+                    runRestaurant={runRestaurant}
+                    menuItems={menuItems}
+                    activeRunId={activeRun?.id}
+                    activeItemId={effectiveMenuItemId ?? null}
+                    onSelectMenuItem={openMenuDetail}
+                  />
+                )}
+              </div>
+            )}
           </div>
         </section>
       </div>
