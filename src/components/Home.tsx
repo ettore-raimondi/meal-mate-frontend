@@ -4,84 +4,10 @@ import MenuItemDetail from "./MenuItemDetail";
 import RunDetailView from "./RunDetailView";
 import RunList from "./RunList";
 import { FoodRun, MenuItem, PanelView, Restaurant } from "./homeTypes";
+import Sidebar from "./Sidebar";
+import { restaurantSeed } from "../data/restaurants";
 
-const restaurants: Restaurant[] = [
-  {
-    id: "rest-1",
-    name: "Pasta & Co.",
-    location: "Downtown",
-    cuisine: "Italian",
-    menu: [
-      {
-        id: "m-1",
-        name: "Truffle Tagliatelle",
-        price: "$18",
-        available: true,
-        description: "Hand-cut pasta, black truffle butter, parmesan snow.",
-      },
-      {
-        id: "m-2",
-        name: "Citrus Burrata",
-        price: "$12",
-        available: true,
-        description: "Blood orange, basil oil, toasted pistachio crumble.",
-      },
-      {
-        id: "m-3",
-        name: "Lemon Tiramisu",
-        price: "$9",
-        available: false,
-        description:
-          "Meyer lemon curd, mascarpone cloud, white chocolate dust.",
-      },
-    ],
-  },
-  {
-    id: "rest-2",
-    name: "Bao District",
-    location: "Uptown",
-    cuisine: "Asian Street Food",
-    menu: [
-      {
-        id: "m-4",
-        name: "Miso Glazed Bao",
-        price: "$11",
-        available: true,
-        description: "Steamed bao, caramelized miso glaze, pickled daikon.",
-      },
-      {
-        id: "m-5",
-        name: "Sesame Crunch Salad",
-        price: "$10",
-        available: true,
-        description:
-          "Shaved cabbage, toasted sesame brittle, chili-lime vinaigrette.",
-      },
-    ],
-  },
-  {
-    id: "rest-3",
-    name: "Harvest Bowl",
-    location: "Midtown",
-    cuisine: "Healthy Bowls",
-    menu: [
-      {
-        id: "m-6",
-        name: "Tahini Power Bowl",
-        price: "$13",
-        available: true,
-        description: "Roasted sweet potato, chickpeas, lemon tahini drizzle.",
-      },
-      {
-        id: "m-7",
-        name: "Roasted Veggie Stack",
-        price: "$14",
-        available: true,
-        description: "Layered squash, herb pesto, smoked sea salt finish.",
-      },
-    ],
-  },
-];
+const restaurants: Restaurant[] = restaurantSeed;
 
 const runs: FoodRun[] = [
   {
@@ -289,22 +215,7 @@ function Home() {
 
   return (
     <div className="dashboard">
-      <aside className="sidebar">
-        <div className="brand">Meal Mate</div>
-        <nav>
-          <p className="nav-label">Overview</p>
-          <button className="nav-item active">Dashboard</button>
-          <button className="nav-item">Restaurants</button>
-          <button className="nav-item">Runs</button>
-          <button className="nav-item">Orders</button>
-          <button className="nav-item">Team</button>
-        </nav>
-        <div className="sidebar-footer">
-          <p>Next run closes in</p>
-          <strong>22 min</strong>
-        </div>
-      </aside>
-
+      <Sidebar activeItem="dashboard" />
       <div className="workspace">
         <section className="panel runs-panel full-panel">
           <div className="panel-head">
@@ -340,7 +251,7 @@ function Home() {
 
             <div className="panel-actions">
               {panelView === "runs" && (
-                <button className="btn btn-ghost">New Run</button>
+                <button className="btn btn-ghost btn-compact">New Run</button>
               )}
             </div>
           </div>

@@ -4,12 +4,16 @@ export type MenuItem = {
   price: string;
   available: boolean;
   description: string;
+  imageUrl?: string;
 };
 
 export type Restaurant = {
   id: string;
   name: string;
-  location: string;
+  address: string;
+  phoneNumber: string;
+  websiteUrl: string;
+  description: string;
   cuisine: string;
   menu: MenuItem[];
 };

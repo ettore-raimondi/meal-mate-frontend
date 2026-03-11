@@ -1,10 +1,12 @@
+import { ReactNode } from "react";
 import { MenuItem } from "./homeTypes";
 
 type MenuItemDetailProps = {
   menuItem: MenuItem;
+  actionSlot?: ReactNode;
 };
 
-function MenuItemDetail({ menuItem }: MenuItemDetailProps) {
+function MenuItemDetail({ menuItem, actionSlot }: MenuItemDetailProps) {
   return (
     <section className="menu-detail-view">
       <p className="menu-detail-description menu-detail-description--large">
@@ -18,9 +20,11 @@ function MenuItemDetail({ menuItem }: MenuItemDetailProps) {
           {menuItem.available ? "In stock" : "Sold out"}
         </span>
         <span className="menu-detail-price">{menuItem.price}</span>
-        <button className="btn" type="button">
-          Add to order
-        </button>
+        {actionSlot ?? (
+          <button className="btn" type="button">
+            Add to order
+          </button>
+        )}
       </div>
     </section>
   );
