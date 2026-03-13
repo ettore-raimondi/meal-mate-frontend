@@ -3,9 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import MenuItemDetail from "./MenuItemDetail";
 import RunDetailView from "./RunDetailView";
 import RunList from "./RunList";
-import { FoodRun, MenuItem, PanelView, Restaurant } from "./homeTypes";
-import Sidebar from "./Sidebar";
-import { restaurantSeed } from "../data/restaurants";
+import { FoodRun, MenuItem, PanelView, Restaurant } from "../homeTypes";
+import Sidebar from "../Sidebar";
+import { restaurantSeed } from "../../data/restaurants";
 
 const restaurants: Restaurant[] = restaurantSeed;
 
@@ -62,7 +62,7 @@ const fromRouteMenuSegment = (segment?: string) => {
   return segment.startsWith(MENU_PREFIX) ? segment : `${MENU_PREFIX}${segment}`;
 };
 
-function Home() {
+function Dashboard() {
   const [activeRunId, setActiveRunId] = useState(runs[0]?.id ?? "");
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -101,11 +101,11 @@ function Home() {
 
   const handleRunSelect = (id: string) => {
     setActiveRunId(id);
-    navigate(`/home/run/${toRouteRunSegment(id)}`);
+    navigate(`/dashboard/run/${toRouteRunSegment(id)}`);
   };
 
   const handleBackToRuns = () => {
-    navigate("/home");
+    navigate("/dashboard");
   };
 
   const openMenuDetail = (itemId: string) => {
@@ -115,16 +115,16 @@ function Home() {
     }
     setActiveItemId(itemId);
     navigate(
-      `/home/run/${toRouteRunSegment(targetRunId)}/menu-item/${toRouteMenuSegment(itemId)}`,
+      `/dashboard/run/${toRouteRunSegment(targetRunId)}/menu-item/${toRouteMenuSegment(itemId)}`,
     );
   };
 
   const closeMenuDetail = () => {
     const targetRunId = routeRunId ?? activeRunId;
     if (targetRunId) {
-      navigate(`/home/run/${toRouteRunSegment(targetRunId)}`);
+      navigate(`/dashboard/run/${toRouteRunSegment(targetRunId)}`);
     } else {
-      navigate("/home");
+      navigate("/dashboard");
     }
   };
 
@@ -170,7 +170,7 @@ function Home() {
       if (runExists && activeRunId !== routeRunId) {
         setActiveRunId(routeRunId);
       } else if (!runExists) {
-        navigate("/home", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
     }
   }, [routeRunId, activeRunId, navigate, runs]);
@@ -187,7 +187,7 @@ function Home() {
         setActiveItemId(null);
       }
       if (routeMenuItemId && routeRunId) {
-        navigate(`/home/run/${toRouteRunSegment(routeRunId)}`, {
+        navigate(`/dashboard/run/${toRouteRunSegment(routeRunId)}`, {
           replace: true,
         });
       }
@@ -201,7 +201,7 @@ function Home() {
           setActiveItemId(routeMenuItemId);
         }
       } else if (routeRunId) {
-        navigate(`/home/run/${toRouteRunSegment(routeRunId)}`, {
+        navigate(`/dashboard/run/${toRouteRunSegment(routeRunId)}`, {
           replace: true,
         });
       }
@@ -288,4 +288,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default Dashboard;

@@ -3,9 +3,9 @@ import "./App.css";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import { Toaster } from "sonner";
-import Home from "./components/Home";
+import Dashboard from "./components/dashboard/Dashboard";
 import Landing from "./components/Landing";
-import Restaurants from "./components/Restaurants";
+import Restaurants from "./components/restaurants/Restaurants";
 import Orders from "./components/Orders";
 import Runs from "./components/Runs";
 
@@ -17,11 +17,11 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/home/run/:runNumber" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/run/:runNumber" element={<Dashboard />} />
         <Route
-          path="/home/run/:runNumber/menu-item/:menuItemNumber"
-          element={<Home />}
+          path="/dashboard/run/:runNumber/menu-item/:menuItemNumber"
+          element={<Dashboard />}
         />
         <Route path="/runs" element={<Runs />} />
         <Route path="/orders" element={<Orders />} />

@@ -829,6 +829,56 @@ margin-left: auto;
   padding-bottom: 0;
 }
 
+.restaurant-directory {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 100%;
+  padding-right: 0.25rem;
+}
+
+.restaurant-directory-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.restaurant-list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.restaurant-list-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #1f1d2b;
+}
+
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.15rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #312e81;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.list-card--static {
+  cursor: default;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.list-card--static:hover {
+  background: inherit;
+  box-shadow: none;
+}
+
 .scrollable {
   overflow-y: auto;
   padding-right: 0.5rem;
@@ -885,7 +935,6 @@ margin-left: auto;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.35rem 0.75rem;
 }
 
 .menu-section-head .btn {

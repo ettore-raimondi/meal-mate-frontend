@@ -1,4 +1,5 @@
-import { httpClient } from "../http";
+import { httpClient } from "../http/http";
+import type { AuthResponseDTO } from "./auth.mapper";
 
 export async function login({
   email,
@@ -24,9 +25,21 @@ export async function signup({
   lastName: string;
   email: string;
   password: string;
-}): Promise<{ id: string; email: string }> {
-  return httpClient("users", {
+}): Promise<AuthResponseDTO> {
+  return httpClient("users/", {
     method: "POST",
     body: { firstName, lastName, email, password },
+  });
+}
+
+export function getAccessTokenWithRefreshToken(): Promise<AuthResponseDTO> {
+  const refreshToken = localStorage.getItem("refreshToken");
+  if (!refreshToken) {
+    return Promise.reject(new Error("No refresh token found"));
+  }
+
+  return httpClient("token/refresh/", {
+    method: "POST",
+    body: { refresh: refreshToken },
   });
 }

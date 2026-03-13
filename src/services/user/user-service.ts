@@ -1,4 +1,4 @@
-import { httpClient } from "../http";
+import { httpClient } from "../http/http";
 
 const SERVICE_ENDPOINT = "users";
 

@@ -1,4 +1,4 @@
-import { MenuItem, Restaurant } from "./homeTypes";
+import { MenuItem, Restaurant } from "../homeTypes";
 
 type RunDetailViewProps = {
   runRestaurant?: Restaurant;

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { MenuItem } from "./homeTypes";
+import { MenuItem } from "../homeTypes";
 
 type MenuItemDetailProps = {
   menuItem: MenuItem;

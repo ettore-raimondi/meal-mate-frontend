@@ -12,9 +12,10 @@ function Login() {
     event.preventDefault();
     const response = await login({ email, password });
     localStorage.setItem("token", response.access);
+    localStorage.setItem("refreshToken", response.refresh);
     toast.success("Logged in successfully, redirecting...");
     setTimeout(() => {
-      navigate("/home");
+      navigate("/dashboard");
     }, 1000);
   };
 

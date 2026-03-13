@@ -1,4 +1,4 @@
-import { FoodRun, Restaurant } from "./homeTypes";
+import { FoodRun, Restaurant } from "../homeTypes";
 
 type RunListProps = {
   runs: FoodRun[];

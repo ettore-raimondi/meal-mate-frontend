@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 const NAV_ITEMS = [
-  { key: "dashboard", label: "Dashboard", path: "/home" },
+  { key: "dashboard", label: "Dashboard", path: "/dashboard" },
   { key: "restaurants", label: "Restaurants", path: "/restaurants" },
   { key: "runs", label: "Runs", path: "/runs" },
   { key: "orders", label: "Orders", path: "/orders" },
