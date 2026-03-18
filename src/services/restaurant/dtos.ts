@@ -1,6 +1,6 @@
 export type RestaurantDTO = {
   id: string;
-  google_places_id: number;
+  google_places_id?: string;
   created_at: string;
   deleted_at: string | null;
   name: string;

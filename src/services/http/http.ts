@@ -1,7 +1,7 @@
 import type { ApiEndpoints } from ".";
 import { getAccessTokenWithRefreshToken } from "../auth/auth.service";
 
-const SupportedHttpMethods = ["GET", "POST", "PUT", "DELETE"] as const;
+const SupportedHttpMethods = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
 
 export type HttpMethods = (typeof SupportedHttpMethods)[number];
 
@@ -17,6 +17,10 @@ type EndpointBody<P extends ApiEndpointPath, M extends ApiEndpointMethod<P>> =
   ApiEndpointConfig<P, M> extends { body: infer B } ? B : never;
 type EndpointParams<P extends ApiEndpointPath, M extends ApiEndpointMethod<P>> =
   ApiEndpointConfig<P, M> extends { params: infer Q } ? Q : never;
+type EndpointUrlParams<
+  P extends ApiEndpointPath,
+  M extends ApiEndpointMethod<P>,
+> = ApiEndpointConfig<P, M> extends { urlParams: infer U } ? U : never;
 type EndpointResponse<
   P extends ApiEndpointPath,
   M extends ApiEndpointMethod<P>,
@@ -30,7 +34,21 @@ type HttpClientOptions<
   params?: EndpointParams<P, M>;
   body?: EndpointBody<P, M>;
   headers?: Record<string, string>;
+  urlParams?: EndpointUrlParams<P, M>;
 };
+
+function replaceUrlParams<
+  P extends ApiEndpointPath,
+  M extends ApiEndpointMethod<P>,
+>(url: P, urlParams?: EndpointUrlParams<P, M> | undefined): string {
+  if (!urlParams) return url;
+
+  let replacedUrl = url as string;
+  for (const [key, value] of Object.entries(urlParams)) {
+    replacedUrl = replacedUrl.replace(`:${key}`, value as string);
+  }
+  return replacedUrl;
+}
 
 export async function httpClient<
   P extends ApiEndpointPath,
@@ -56,16 +74,19 @@ export async function httpClient<
     : "";
 
   const makeRequest = async (accessToken: string | null) => {
-    return fetch(`${apiUrl}/${url}${queryString}`, {
-      method: options.method,
-      headers: {
-        "Content-Type": "application/json",
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-        ...(options.headers ?? {}),
+    return fetch(
+      `${apiUrl}/${replaceUrlParams(url, options.urlParams)}${queryString}`,
+      {
+        method: options.method,
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+          ...(options.headers ?? {}),
+        },
+        ...(body && { body }),
       },
-      ...(body && { body }),
-    })
-      .then()
+    )
+      .then((response) => response)
       .catch((error) => {
         throw new Error(`Http request failed! Error: ${error.message}`);
       });
@@ -79,6 +100,9 @@ export async function httpClient<
       localStorage.setItem("token", tokens.access);
       // Retry the original request with the new access token
       const retryResponse = await makeRequest(tokens.access);
+      if (retryResponse.status === 204) {
+        return undefined as EndpointResponse<P, M>;
+      }
       return retryResponse.json() as Promise<EndpointResponse<P, M>>;
     } catch {
       localStorage.removeItem("token");
@@ -91,6 +115,10 @@ export async function httpClient<
     throw new Error(
       `Http request failed! Status code: ${response.status}, error: ${await response.json()}`,
     );
+  }
+
+  if (response.status === 204) {
+    return undefined as EndpointResponse<P, M>;
   }
 
   return response.json() as Promise<EndpointResponse<P, M>>;

@@ -1,3 +1,5 @@
+import type { RestaurantFormData } from "./types";
+
 export function validateNewRestaurant({
   name,
   address,
@@ -5,14 +7,7 @@ export function validateNewRestaurant({
   websiteUrl,
   description,
   imageUrl,
-}: {
-  name: string;
-  address: string;
-  phoneNumber: string;
-  websiteUrl: string;
-  description: string;
-  imageUrl: string;
-}) {
+}: RestaurantFormData) {
   const errors: string[] = [];
 
   if (!name || name.trim() === "") {
@@ -25,18 +20,6 @@ export function validateNewRestaurant({
 
   if (!phoneNumber || phoneNumber.trim() === "") {
     errors.push("Phone number is required.");
-  }
-
-  if (!websiteUrl || websiteUrl.trim() === "") {
-    errors.push("Website URL is required.");
-  }
-
-  if (!description || description.trim() === "") {
-    errors.push("Description is required.");
-  }
-
-  if (!imageUrl || imageUrl.trim() === "") {
-    errors.push("Image URL is required.");
   }
 
   if (errors.length > 0) {

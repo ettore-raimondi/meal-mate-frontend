@@ -6,7 +6,6 @@ export type RestaurantFormState = {
   phoneNumber: string;
   websiteUrl: string;
   description: string;
-  cuisine: string;
 };
 
 export type MenuDraftState = {
@@ -24,7 +23,6 @@ export const emptyRestaurantForm: RestaurantFormState = {
   phoneNumber: "",
   websiteUrl: "",
   description: "",
-  cuisine: "",
 };
 
 export const emptyMenuDraft: MenuDraftState = {

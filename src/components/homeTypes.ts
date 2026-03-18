@@ -1,11 +1,6 @@
-export type MenuItem = {
-  id: string;
-  name: string;
-  price: string;
-  available: boolean;
-  description: string;
-  imageUrl?: string;
-};
+import type { MenuItem as ServiceMenuItem } from "../services/menu-item";
+
+export type MenuItem = ServiceMenuItem;
 
 export type Restaurant = {
   id: string;
@@ -13,6 +8,7 @@ export type Restaurant = {
   address: string;
   phoneNumber: string;
   websiteUrl: string;
+  googlePlacesId?: string;
   description: string;
   cuisine: string;
   menu: MenuItem[];

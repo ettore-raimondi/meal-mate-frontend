@@ -1,6 +1,6 @@
 export type Restaurant = {
   id: string;
-  googlePlacesId: number;
+  googlePlacesId?: string;
   createdAt: string;
   deletedAt: string | null;
   name: string;
@@ -13,10 +13,11 @@ export type Restaurant = {
 };
 
 export type RestaurantFormData = {
+  googlePlacesId?: string;
   name: string;
   address: string;
   phoneNumber: string;
   websiteUrl: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
 };

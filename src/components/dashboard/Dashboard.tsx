@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { formatEuroPrice } from "../../helpers/currency";
 import MenuItemDetail from "./MenuItemDetail";
 import RunDetailView from "./RunDetailView";
 import RunList from "./RunList";
 import { FoodRun, MenuItem, PanelView, Restaurant } from "../homeTypes";
 import Sidebar from "../Sidebar";
-import { restaurantSeed } from "../../data/restaurants";
 
-const restaurants: Restaurant[] = restaurantSeed;
+const restaurants: Restaurant[] = [];
 
 const runs: FoodRun[] = [
   {
@@ -146,7 +146,7 @@ function Dashboard() {
     }
     if (panelView === "menuDetail" && activeMenuItem) {
       const restaurantLabel = runRestaurant ? `${runRestaurant.name}` : "";
-      const priceLabel = activeMenuItem.price;
+      const priceLabel = formatEuroPrice(activeMenuItem.price);
       return restaurantLabel
         ? `${restaurantLabel} · ${priceLabel}`
         : priceLabel;

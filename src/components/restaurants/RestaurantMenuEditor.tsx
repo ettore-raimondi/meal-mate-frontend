@@ -7,6 +7,7 @@ type RestaurantMenuEditorProps = {
   onChange: (field: keyof MenuDraftState, value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onDelete?: () => void;
+  onCancel: () => void;
 };
 
 function RestaurantMenuEditor({
@@ -15,6 +16,7 @@ function RestaurantMenuEditor({
   onChange,
   onSubmit,
   onDelete,
+  onCancel,
 }: RestaurantMenuEditorProps) {
   const isEditMode = mode.type === "edit";
   return (
@@ -43,7 +45,7 @@ function RestaurantMenuEditor({
             <input
               value={draft.price}
               onChange={(event) => onChange("price", event.target.value)}
-              placeholder="$12.00"
+              placeholder="€12.00"
               required
             />
           </label>
@@ -71,6 +73,9 @@ function RestaurantMenuEditor({
               {isEditMode ? "Save item" : "Create item"}
             </button>
           </div>
+          <button className="btn btn-ghost" type="button" onClick={onCancel}>
+            Back to restaurant
+          </button>
           {isEditMode && onDelete && (
             <div className="menu-inline-actions-danger">
               <button

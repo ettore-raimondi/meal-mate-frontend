@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { formatEuroPrice } from "../../helpers/currency";
 import { MenuItem } from "../homeTypes";
 
 type MenuItemDetailProps = {
@@ -14,12 +15,9 @@ function MenuItemDetail({ menuItem, actionSlot }: MenuItemDetailProps) {
       </p>
 
       <div className="menu-detail-meta">
-        <span
-          className={`availability ${menuItem.available ? "is-available" : "is-soldout"}`}
-        >
-          {menuItem.available ? "In stock" : "Sold out"}
+        <span className="menu-detail-price">
+          {formatEuroPrice(menuItem.price)}
         </span>
-        <span className="menu-detail-price">{menuItem.price}</span>
         {actionSlot ?? (
           <button className="btn" type="button">
             Add to order

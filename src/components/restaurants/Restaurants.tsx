@@ -1,48 +1,62 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../Sidebar";
-import { MenuItem, Restaurant } from "../homeTypes";
-import { restaurantSeed } from "../../data/restaurants";
-import RestaurantList from "./RestaurantList";
-import RestaurantFormFields from "./RestaurantFormFields";
-import RestaurantMenuSection from "./RestaurantMenuSection";
-import RestaurantMenuEditor from "./RestaurantMenuEditor";
+import type { MenuItem, Restaurant } from "../homeTypes";
 import {
   emptyMenuDraft,
   emptyRestaurantForm,
-  MenuDraftMode,
-  MenuDraftState,
-  RestaurantFormState,
+  type MenuDraftMode,
+  type MenuDraftState,
+  type RestaurantFormState,
 } from "./types";
 import {
   createRestaurant,
+  deleteRestaurant,
   fetchRestaurants,
+  fetchRestaurantsNearMe,
+  updateRestaurant,
 } from "../../services/restaurant/restaurant.service";
 import { fetchCoordinates } from "../../helpers/get-coordinates";
 import { type RestaurantFormData } from "../../services/restaurant/types";
+import {
+  deleteMenuItem,
+  getMenuItemsForRestaurant,
+  saveMenuItems,
+  scrapeMenuItems,
+  updateMenuItems as updateMenuItemsService,
+} from "../../services/menu-item";
+import { confirmToast } from "../toast/confirmToast";
+import { toast } from "sonner";
+import PanelHeader from "./components/PanelHeader";
+import RestaurantDirectoryPanel from "./components/RestaurantDirectoryPanel";
+import RestaurantDetailPanel, {
+  type RestaurantDetailActions,
+  type RestaurantDetailState,
+} from "./components/RestaurantDetailPanel";
+import {
+  NEW_RESTAURANT_SLUG,
+  type RestaurantCollection,
+  useRestaurantCollections,
+  useRestaurantSelection,
+} from "./hooks";
 
-const RESTAURANT_PREFIX = "rest-";
 const MENU_PREFIX = "m-";
-const NEW_RESTAURANT_SLUG = "new";
 
-const toRouteSegment = (id: string, prefix: string) =>
-  id.replace(new RegExp(`^${prefix}`, "i"), "");
-
-const fromRouteSegment = (segment: string | undefined, prefix: string) => {
-  if (!segment) {
-    return undefined;
-  }
-  return segment.startsWith(prefix) ? segment : `${prefix}${segment}`;
-};
+const toRestaurantFormState = (
+  restaurant?: Partial<Restaurant> | null,
+): RestaurantFormState => ({
+  name: restaurant?.name ?? "",
+  address: restaurant?.address ?? "",
+  phoneNumber: restaurant?.phoneNumber ?? "",
+  websiteUrl: restaurant?.websiteUrl ?? "",
+  description: restaurant?.description ?? "",
+});
 
 function Restaurants() {
   const navigate = useNavigate();
   const { restaurantNumber } = useParams<{ restaurantNumber?: string }>();
-  const [restaurants, setRestaurants] = useState<Restaurant[]>(restaurantSeed);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [restaurantsNearMe, setRestaurantsNearMe] = useState<Restaurant[]>([]);
-  const [activeRestaurantId, setActiveRestaurantId] = useState<string | null>(
-    restaurantSeed[0]?.id ?? null,
-  );
   const [menuEditorMode, setMenuEditorMode] = useState<MenuDraftMode | null>(
     null,
   );
@@ -50,41 +64,48 @@ function Restaurants() {
   const [restaurantForm, setRestaurantForm] =
     useState<RestaurantFormState>(emptyRestaurantForm);
   const [newRestaurantMenu, setNewRestaurantMenu] = useState<MenuItem[]>([]);
+  const [isSavingNearby, setIsSavingNearby] = useState(false);
 
-  const isCreatingRestaurant = restaurantNumber === NEW_RESTAURANT_SLUG;
-  const routeRestaurantId = isCreatingRestaurant
-    ? undefined
-    : fromRouteSegment(restaurantNumber, RESTAURANT_PREFIX);
-  const effectiveRestaurantId =
-    routeRestaurantId ?? (isCreatingRestaurant ? null : activeRestaurantId);
-  const viewingDetail = Boolean(routeRestaurantId) || isCreatingRestaurant;
-  const activeRestaurant = useMemo(
-    () =>
-      restaurants.find((restaurant) => restaurant.id === effectiveRestaurantId),
-    [restaurants, effectiveRestaurantId],
-  );
+  const {
+    addRestaurantToCollection,
+    updateRestaurantInCollection,
+    removeRestaurantFromCollection,
+  } = useRestaurantCollections(setRestaurants, setRestaurantsNearMe);
+
+  const {
+    isCreatingRestaurant,
+    viewingDetail,
+    restaurantRouteId,
+    activeRestaurant,
+    activeRestaurantSource,
+  } = useRestaurantSelection(restaurantNumber, restaurants, restaurantsNearMe);
+
   const currentMenuItems = isCreatingRestaurant
     ? newRestaurantMenu
     : (activeRestaurant?.menu ?? []);
+  const isNearbyRestaurantDetail =
+    activeRestaurantSource === "nearby" &&
+    viewingDetail &&
+    !isCreatingRestaurant;
+  const isEditingMenu = Boolean(menuEditorMode);
 
   useEffect(() => {
-    if (routeRestaurantId) {
-      const exists = restaurants.some(
-        (restaurant) => restaurant.id === routeRestaurantId,
-      );
-      if (exists) {
-        setActiveRestaurantId(routeRestaurantId);
-      } else {
-        navigate("/restaurants", { replace: true });
-      }
+    if (!restaurantRouteId) {
+      return;
     }
-  }, [routeRestaurantId, restaurants, navigate]);
-
-  useEffect(() => {
-    if (!routeRestaurantId && !activeRestaurantId && restaurants.length > 0) {
-      setActiveRestaurantId(restaurants[0].id);
+    if (
+      !activeRestaurant &&
+      (restaurants.length > 0 || restaurantsNearMe.length > 0)
+    ) {
+      navigate("/restaurants", { replace: true });
     }
-  }, [routeRestaurantId, activeRestaurantId, restaurants]);
+  }, [
+    restaurantRouteId,
+    activeRestaurant,
+    restaurants.length,
+    restaurantsNearMe.length,
+    navigate,
+  ]);
 
   useEffect(() => {
     if (isCreatingRestaurant) {
@@ -93,14 +114,7 @@ function Restaurants() {
       return;
     }
     if (activeRestaurant) {
-      setRestaurantForm({
-        name: activeRestaurant.name,
-        address: activeRestaurant.address,
-        phoneNumber: activeRestaurant.phoneNumber,
-        websiteUrl: activeRestaurant.websiteUrl,
-        description: activeRestaurant.description,
-        cuisine: activeRestaurant.cuisine,
-      });
+      setRestaurantForm(toRestaurantFormState(activeRestaurant));
     } else {
       setRestaurantForm(emptyRestaurantForm);
     }
@@ -109,7 +123,7 @@ function Restaurants() {
   useEffect(() => {
     setMenuEditorMode(null);
     setMenuEditor(emptyMenuDraft);
-  }, [activeRestaurantId]);
+  }, [restaurantNumber]);
 
   useEffect(() => {
     if (!viewingDetail) {
@@ -120,18 +134,25 @@ function Restaurants() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Gets coordinates and fetches nearby restaurants
       const coordinates = await fetchCoordinates();
       if (coordinates) {
         const { latitude, longitude } = coordinates;
-        const restaurants = await fetchRestaurants(latitude, longitude);
-        setRestaurantsNearMe(restaurants);
+        const nearbyRestaurants = await fetchRestaurantsNearMe(
+          latitude,
+          longitude,
+        );
+        const normalized = nearbyRestaurants.map((restaurant) => ({
+          ...restaurant,
+          menu: restaurant.menu ?? [],
+        }));
+        setRestaurantsNearMe(normalized);
       }
+
+      const restaurants = await fetchRestaurants();
+      setRestaurants(restaurants);
     };
     fetchData();
   }, []);
-
-  const isEditingMenu = Boolean(menuEditorMode);
 
   const panelTitle = isCreatingRestaurant
     ? "Add Restaurant"
@@ -142,13 +163,28 @@ function Restaurants() {
   const panelSubtitle = isCreatingRestaurant
     ? "List a new kitchen and get it ready for runs."
     : viewingDetail && activeRestaurant && !isEditingMenu
-      ? `${activeRestaurant.address} · ${activeRestaurant.cuisine}`
+      ? isNearbyRestaurantDetail
+        ? `${activeRestaurant.address} · Suggested nearby kitchen`
+        : `${activeRestaurant.address} · ${activeRestaurant.cuisine}`
       : "Browse all partner kitchens.";
 
-  const handleSelectRestaurant = (restaurantId: string) => {
-    setActiveRestaurantId(restaurantId);
-    const slug = toRouteSegment(restaurantId, RESTAURANT_PREFIX);
-    navigate(`/restaurants/${slug}`);
+  const handleSelectRestaurant = async (restaurantId: string) => {
+    try {
+      const menuItems = await getMenuItemsForRestaurant(restaurantId);
+      updateRestaurantInCollection("owned", restaurantId, (restaurant) => ({
+        ...restaurant,
+        menu: menuItems,
+      }));
+    } catch (error) {
+      console.error("Failed to load menu items:", error);
+      toast.error("Couldn't load the latest menu items.");
+    } finally {
+      navigate(`/restaurants/${restaurantId}`);
+    }
+  };
+
+  const handleSelectNearbyRestaurant = (restaurantId: string) => {
+    navigate(`/restaurants/${restaurantId}`);
   };
 
   const handleBackToRestaurants = () => {
@@ -161,16 +197,65 @@ function Restaurants() {
     navigate(`/restaurants/${NEW_RESTAURANT_SLUG}`);
   };
 
-  const handleDeleteRestaurant = (restaurantId: string) => {
-    setRestaurants((prev) => {
-      const next = prev.filter((rest) => rest.id !== restaurantId);
-      if (effectiveRestaurantId === restaurantId) {
-        const fallback = next[0];
-        setActiveRestaurantId(fallback?.id ?? null);
-        navigate("/restaurants");
-      }
-      return next;
+  const validateRequiredFields = (
+    context: "create" | "saveNearby",
+  ): boolean => {
+    const missingField =
+      (!restaurantForm.name && "name") ||
+      (!restaurantForm.address && "address") ||
+      (!restaurantForm.phoneNumber && "phone number");
+
+    if (missingField) {
+      const intent =
+        context === "create"
+          ? "creating a restaurant"
+          : "saving to My Restaurants";
+      toast.error(`Add a ${missingField} before ${intent}.`);
+      return false;
+    }
+    return true;
+  };
+
+  const requestRestaurantDeletion = async () => {
+    if (!activeRestaurant) {
+      return;
+    }
+    const confirmed = await confirmToast({
+      title: isNearbyRestaurantDetail
+        ? "Remove suggestion?"
+        : "Delete restaurant?",
+      description: isNearbyRestaurantDetail
+        ? `This only removes ${activeRestaurant.name} from nearby suggestions.`
+        : `This permanently deletes ${activeRestaurant.name} and its menu items.`,
+      confirmLabel: isNearbyRestaurantDetail ? "Remove" : "Delete",
+      cancelLabel: "Cancel",
+      tone: "danger",
     });
+    if (!confirmed) {
+      return;
+    }
+    await handleDeleteRestaurant(activeRestaurant.id);
+  };
+
+  const handleDeleteRestaurant = async (restaurantId: string) => {
+    const source: RestaurantCollection =
+      activeRestaurantSource ??
+      (restaurantsNearMe.some((restaurant) => restaurant.id === restaurantId)
+        ? "nearby"
+        : "owned");
+
+    try {
+      await deleteRestaurant(restaurantId);
+      removeRestaurantFromCollection(source, restaurantId);
+      navigate("/restaurants");
+    } catch (error) {
+      console.error("Failed to delete restaurant:", error);
+    }
+  };
+
+  const handleScrapeMenuItems = async (websiteUrl: string) => {
+    const menuItems = await scrapeMenuItems(websiteUrl);
+    console.log("Scraped menu items:", menuItems);
   };
 
   const handleRestaurantFormChange = (
@@ -185,15 +270,16 @@ function Restaurants() {
       setNewRestaurantMenu((prev) => updater(prev));
       return;
     }
-    if (!effectiveRestaurantId) {
+    if (!activeRestaurant || !activeRestaurantSource) {
       return;
     }
-    setRestaurants((prev) =>
-      prev.map((restaurant) =>
-        restaurant.id === effectiveRestaurantId
-          ? { ...restaurant, menu: updater(restaurant.menu) }
-          : restaurant,
-      ),
+    updateRestaurantInCollection(
+      activeRestaurantSource,
+      activeRestaurant.id,
+      (restaurant) => ({
+        ...restaurant,
+        menu: updater(restaurant.menu ?? []),
+      }),
     );
   };
 
@@ -233,28 +319,53 @@ function Restaurants() {
     if (menuEditorMode.type === "edit") {
       const targetId = menuEditorMode.itemId;
       updateMenuItems((prevMenu) =>
-        prevMenu.map((item) =>
-          item.id === targetId ? { ...item, ...menuEditor } : item,
-        ),
+        prevMenu.map((item) => {
+          if (item.id !== targetId) {
+            return item;
+          }
+          const nextClientState =
+            item.clientState === "new" ? "new" : "toUpdate";
+          return { ...item, ...menuEditor, clientState: nextClientState };
+        }),
       );
       cancelMenuEditor();
       return;
     }
 
-    const randomId = globalThis.crypto?.randomUUID?.() ?? Date.now().toString();
     const newItem: MenuItem = {
-      id: `${MENU_PREFIX}${randomId}`,
+      id: `${MENU_PREFIX}${Date.now()}`,
       name: menuEditor.name,
       price: menuEditor.price,
       description: menuEditor.description,
       imageUrl: menuEditor.imageUrl,
-      available: true,
+      clientState: "new",
     };
     updateMenuItems((prevMenu) => [newItem, ...prevMenu]);
     cancelMenuEditor();
   };
 
-  const handleDeleteMenuItem = (itemId: string) => {
+  const handleDeleteMenuItem = async (itemId: string) => {
+    const sourceMenu = isCreatingRestaurant
+      ? newRestaurantMenu
+      : (activeRestaurant?.menu ?? []);
+    const targetItem = sourceMenu.find((item) => item.id === itemId);
+
+    const confirmed = await confirmToast({
+      title: "Delete menu item?",
+      description: targetItem
+        ? `This removes ${targetItem.name} from the menu.`
+        : "This removes the item from the menu.",
+      confirmLabel: "Delete item",
+      cancelLabel: "Cancel",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    await deleteMenuItem(itemId);
+
     updateMenuItems((prevMenu) =>
       prevMenu.filter((item) => item.id !== itemId),
     );
@@ -263,54 +374,137 @@ function Restaurants() {
     }
   };
 
+  const handleCreateRestaurant = async (restaurantForm: RestaurantFormData) => {
+    if (!validateRequiredFields("create")) {
+      return;
+    }
+
+    const createdRestaurant = await createRestaurant(restaurantForm);
+    let createdMenuItems: MenuItem[] = [];
+    if (newRestaurantMenu.length > 0) {
+      createdMenuItems = await saveMenuItems(
+        createdRestaurant.id,
+        newRestaurantMenu,
+      );
+    }
+
+    addRestaurantToCollection("owned", {
+      ...createdRestaurant,
+      menu: createdMenuItems,
+    });
+    setNewRestaurantMenu([]);
+    navigate(`/restaurants/${createdRestaurant.id}`);
+    toast.success(`${createdRestaurant.name} has been created.`);
+  };
+
+  const handleUpdateRestaurant = async (restaurantForm: RestaurantFormData) => {
+    if (!activeRestaurant || !activeRestaurantSource) {
+      return;
+    }
+
+    const updatedRestaurant = await updateRestaurant(
+      activeRestaurant.id,
+      restaurantForm,
+    );
+
+    const updatedMenuItems = await updateMenuItemsService(
+      activeRestaurant.id,
+      activeRestaurant.menu ?? [],
+    );
+
+    updateRestaurantInCollection(
+      activeRestaurantSource,
+      activeRestaurant.id,
+      (restaurant) => ({
+        ...restaurant,
+        ...updatedRestaurant,
+        menu: updatedMenuItems,
+      }),
+    );
+    toast.success(`${updatedRestaurant.name} has been updated.`);
+  };
+
   const handleRestaurantFormSubmit = async (
     event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
     if (isCreatingRestaurant) {
-      if (
-        !restaurantForm.name ||
-        !restaurantForm.address ||
-        !restaurantForm.phoneNumber
-      ) {
-        return;
-      }
-      const newRestaurant: RestaurantFormData = {
+      await handleCreateRestaurant(restaurantForm);
+      return;
+    }
+    await handleUpdateRestaurant(restaurantForm);
+  };
+
+  const handleSaveNearbyRestaurant = async () => {
+    if (
+      !activeRestaurant ||
+      activeRestaurantSource !== "nearby" ||
+      isSavingNearby
+    ) {
+      return;
+    }
+    if (!validateRequiredFields("saveNearby")) {
+      return;
+    }
+    setIsSavingNearby(true);
+    try {
+      const payload: RestaurantFormData = {
         name: restaurantForm.name,
         address: restaurantForm.address,
         phoneNumber: restaurantForm.phoneNumber,
         websiteUrl: restaurantForm.websiteUrl,
         description: restaurantForm.description,
+        ...(activeRestaurant.googlePlacesId
+          ? { googlePlacesId: activeRestaurant.googlePlacesId }
+          : {}),
       };
-
-      // Try to save this restaurant
-      const createdRestaurant = await createRestaurant(newRestaurant);
-
-      setRestaurants((prev) => [createdRestaurant, ...prev]);
-      setActiveRestaurantId(createdRestaurant.id);
-      setNewRestaurantMenu([]);
-      const slug = toRouteSegment(createdRestaurant.id, RESTAURANT_PREFIX);
-      navigate(`/restaurants/${slug}`);
-      return;
+      const createdRestaurant = await createRestaurant(payload);
+      addRestaurantToCollection("owned", createdRestaurant);
+      removeRestaurantFromCollection("nearby", activeRestaurant.id);
+      navigate(`/restaurants/${createdRestaurant.id}`);
+      toast.success(`${createdRestaurant.name} saved to My Restaurants.`);
+    } catch (error) {
+      console.error("Failed to save nearby restaurant", error);
+      toast.error("Could not save that restaurant. Please try again.");
+    } finally {
+      setIsSavingNearby(false);
     }
-    if (!activeRestaurant) {
-      return;
-    }
-    setRestaurants((prev) =>
-      prev.map((restaurant) =>
-        restaurant.id === activeRestaurant.id
-          ? {
-              ...restaurant,
-              name: restaurantForm.name,
-              address: restaurantForm.address,
-              phoneNumber: restaurantForm.phoneNumber,
-              websiteUrl: restaurantForm.websiteUrl,
-              description: restaurantForm.description,
-              cuisine: restaurantForm.cuisine,
-            }
-          : restaurant,
-      ),
-    );
+  };
+
+  const detailState: RestaurantDetailState = {
+    viewingDetail,
+    isCreatingRestaurant,
+    menuEditorMode,
+    menuEditor,
+    restaurantForm,
+    currentMenuItems,
+    activeRestaurant,
+    isNearbyRestaurantDetail,
+    isSavingNearby,
+  };
+
+  const detailActions: RestaurantDetailActions = {
+    onMenuEditorChange: handleMenuEditorChange,
+    onMenuEditorSubmit: handleMenuEditorSubmit,
+    onMenuEditorDelete:
+      menuEditorMode?.type === "edit"
+        ? () => {
+            void handleDeleteMenuItem(menuEditorMode.itemId);
+          }
+        : undefined,
+    onCancelMenuEditor: cancelMenuEditor,
+    onRestaurantFormChange: handleRestaurantFormChange,
+    onRestaurantFormSubmit: handleRestaurantFormSubmit,
+    beginAddMenuItem,
+    beginEditMenuItem,
+    onDeleteMenuItem: (item) => {
+      void handleDeleteMenuItem(item.id);
+    },
+    onSaveNearbyRestaurant: handleSaveNearbyRestaurant,
+    onDeleteRestaurant: activeRestaurant
+      ? requestRestaurantDeletion
+      : undefined,
+    onScrapeMenuItems: handleScrapeMenuItems,
   };
 
   return (
@@ -318,206 +512,29 @@ function Restaurants() {
       <Sidebar activeItem="restaurants" />
       <div className="workspace">
         <section className="panel runs-panel full-panel">
-          <div className="panel-head">
-            <div className="panel-head-main">
-              {viewingDetail && (
-                <button
-                  className="back-link"
-                  onClick={
-                    isEditingMenu ? cancelMenuEditor : handleBackToRestaurants
-                  }
-                  type="button"
-                >
-                  <span className="back-link-icon" aria-hidden="true">
-                    ←
-                  </span>
-                  <span>
-                    {isEditingMenu
-                      ? `Back to ${activeRestaurant?.name ?? "details"}`
-                      : "Back to restaurants"}
-                  </span>
-                </button>
-              )}
-              {!isEditingMenu && (
-                <div className="panel-title-stack">
-                  <div className="panel-title-row">
-                    <h2>{panelTitle}</h2>
-                  </div>
-                  <p className="panel-subtitle">{panelSubtitle}</p>
-                </div>
-              )}
-            </div>
-            {!viewingDetail && (
-              <div className="panel-head-actions">
-                <button
-                  className="btn btn-ghost"
-                  type="button"
-                  onClick={handleBeginCreateRestaurant}
-                >
-                  New restaurant
-                </button>
-              </div>
-            )}
-          </div>
+          <PanelHeader
+            viewingDetail={viewingDetail}
+            isEditingMenu={isEditingMenu}
+            panelTitle={panelTitle}
+            panelSubtitle={panelSubtitle}
+            activeRestaurantName={activeRestaurant?.name}
+            onBack={isEditingMenu ? cancelMenuEditor : handleBackToRestaurants}
+            onBeginCreate={handleBeginCreateRestaurant}
+          />
 
           <div className="runs-grid">
-            {!viewingDetail && (
-              <div className="restaurant-directory scrollable">
-                <section className="restaurant-directory-section">
-                  <div className="restaurant-list-head">
-                    <div>
-                      <h3>My Restaurants</h3>
-                      <p className="muted-label">
-                        Manage kitchens you already partner with.
-                      </p>
-                    </div>
-                    <span className="count-pill">{restaurants.length}</span>
-                  </div>
-                  <RestaurantList
-                    restaurants={restaurants}
-                    onSelect={handleSelectRestaurant}
-                    emptyMessage="No restaurants yet. Add one to begin."
-                  />
-                </section>
-
-                <section className="restaurant-directory-section">
-                  <div className="restaurant-list-head">
-                    <div>
-                      <h3>Restaurants Near Me</h3>
-                      <p className="muted-label">
-                        Suggestions pulled from your current location.
-                      </p>
-                    </div>
-                  </div>
-                  <RestaurantList
-                    restaurants={restaurantsNearMe}
-                    emptyMessage="No nearby suggestions yet."
-                  />
-                </section>
-              </div>
-            )}
-
-            {viewingDetail && (
-              <div className="run-detail scrollable restaurant-detail">
-                {isCreatingRestaurant ? (
-                  menuEditorMode ? (
-                    <RestaurantMenuEditor
-                      mode={menuEditorMode}
-                      draft={menuEditor}
-                      onChange={handleMenuEditorChange}
-                      onSubmit={handleMenuEditorSubmit}
-                      onDelete={
-                        menuEditorMode.type === "edit"
-                          ? () => handleDeleteMenuItem(menuEditorMode.itemId)
-                          : undefined
-                      }
-                    />
-                  ) : (
-                    <div className="restaurant-detail-stack">
-                      <form
-                        id="restaurant-meta-form"
-                        className="restaurant-meta-form"
-                        onSubmit={handleRestaurantFormSubmit}
-                      >
-                        <RestaurantFormFields
-                          values={restaurantForm}
-                          onChange={handleRestaurantFormChange}
-                        />
-                      </form>
-
-                      <RestaurantMenuSection
-                        menu={currentMenuItems}
-                        title="Menu Items"
-                        description="Build the starter lineup; items save with the restaurant."
-                        onAddItem={beginAddMenuItem}
-                        onSelectItem={beginEditMenuItem}
-                      />
-
-                      <div className="restaurant-meta-actions">
-                        <div className="restaurant-meta-actions-primary">
-                          <button
-                            className="btn"
-                            type="submit"
-                            form="restaurant-meta-form"
-                          >
-                            Create restaurant
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                ) : activeRestaurant ? (
-                  menuEditorMode ? (
-                    <RestaurantMenuEditor
-                      mode={menuEditorMode}
-                      draft={menuEditor}
-                      onChange={handleMenuEditorChange}
-                      onSubmit={handleMenuEditorSubmit}
-                      onDelete={
-                        menuEditorMode.type === "edit"
-                          ? () => handleDeleteMenuItem(menuEditorMode.itemId)
-                          : undefined
-                      }
-                    />
-                  ) : (
-                    <div className="restaurant-detail-stack">
-                      <form
-                        id="restaurant-meta-form"
-                        className="restaurant-meta-form"
-                        onSubmit={handleRestaurantFormSubmit}
-                      >
-                        <div className="restaurant-meta-form-head">
-                          <div>
-                            <h3>Edit Restaurant</h3>
-                            <p className="muted-label">
-                              Update the basics before managing the menu.
-                            </p>
-                          </div>
-                        </div>
-                        <RestaurantFormFields
-                          values={restaurantForm}
-                          onChange={handleRestaurantFormChange}
-                        />
-                      </form>
-
-                      <RestaurantMenuSection
-                        menu={currentMenuItems}
-                        onAddItem={beginAddMenuItem}
-                        onSelectItem={beginEditMenuItem}
-                      />
-
-                      <div className="restaurant-meta-actions">
-                        <div className="restaurant-meta-actions-primary">
-                          <button
-                            className="btn"
-                            type="submit"
-                            form="restaurant-meta-form"
-                          >
-                            Save details
-                          </button>
-                        </div>
-                        <div className="restaurant-meta-actions-danger">
-                          <button
-                            className="btn btn-outline btn-danger"
-                            type="button"
-                            onClick={() =>
-                              handleDeleteRestaurant(activeRestaurant.id)
-                            }
-                          >
-                            Delete restaurant
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                ) : (
-                  <div className="blank-state">
-                    <p className="muted-label">
-                      Add a restaurant to begin managing menus.
-                    </p>
-                  </div>
-                )}
-              </div>
+            {viewingDetail ? (
+              <RestaurantDetailPanel
+                state={detailState}
+                actions={detailActions}
+              />
+            ) : (
+              <RestaurantDirectoryPanel
+                owned={restaurants}
+                nearby={restaurantsNearMe}
+                onSelectOwned={handleSelectRestaurant}
+                onSelectNearby={handleSelectNearbyRestaurant}
+              />
             )}
           </div>
         </section>
@@ -525,5 +542,4 @@ function Restaurants() {
     </div>
   );
 }
-
 export default Restaurants;

@@ -1,5 +1,9 @@
 import type { AuthResponseDTO } from "../auth/auth.mapper";
-import type { MenuItemDTO } from "../menu-item";
+import type {
+  CreateMenuItemPayload,
+  MenuItemResponse,
+  UpdateMenuItemPayload,
+} from "../menu-item";
 import type { RestaurantDTO } from "../restaurant";
 
 /**
@@ -54,21 +58,107 @@ export type ApiEndpoints = {
       body: {
         name: string;
         address: string;
-        phoneNumber: string;
-        websiteUrl: string;
+        phone_number: string;
+        website_url: string;
         description: string;
-        imageUrl: string;
+        image_url?: string;
+        google_places_id?: string;
+      };
+      params: never;
+    };
+    GET: {
+      response: RestaurantDTO[];
+      body: never;
+      params: never;
+    };
+  };
+  "restaurants/:id/": {
+    DELETE: {
+      response: never;
+      body: never;
+      params: never;
+      urlParams: {
+        id: string;
+      };
+    };
+    GET: {
+      response: RestaurantDTO;
+      body: never;
+      params: never;
+      urlParams: {
+        id: string;
+      };
+    };
+    PATCH: {
+      response: RestaurantDTO;
+      body: Partial<RestaurantDTO>;
+      urlParams: {
+        id: string;
+      };
+    };
+  };
+  "menu_items/:id/": {
+    DELETE: {
+      response: never;
+      body: never;
+      params: never;
+      urlParams: {
+        id: string;
+      };
+    };
+    GET: {
+      response: MenuItemResponse;
+      body: never;
+      params: never;
+      urlParams: {
+        id: string;
+      };
+    };
+    PATCH: {
+      response: MenuItemResponse;
+      body: Partial<MenuItemResponse>;
+      urlParams: {
+        id: string;
+      };
+    };
+  };
+  "menu_items/scrape/": {
+    GET: {
+      response: MenuItemResponse[];
+      body: never;
+      params: {
+        restaurant_website_url: string;
+      };
+    };
+  };
+  "menu_items/restaurant/:restaurantId/": {
+    GET: {
+      response: MenuItemResponse[];
+      body: never;
+      params: never;
+      urlParams: {
+        restaurantId: string;
+      };
+    };
+  };
+  "menu_items/bulk_create/": {
+    POST: {
+      response: MenuItemResponse[];
+      body: {
+        menu_items: CreateMenuItemPayload[];
+        restaurant_id: string;
       };
       params: never;
     };
   };
-  "scrape/menu-items/": {
-    GET: {
-      response: MenuItemDTO[];
-      body: never;
-      params: {
+  "menu_items/bulk_update/": {
+    PATCH: {
+      response: MenuItemResponse[];
+      body: {
+        menu_items: UpdateMenuItemPayload[];
         restaurant_id: string;
       };
+      params: never;
     };
   };
 };

@@ -29,10 +29,6 @@ function RestaurantList({
           <>
             <div className="run-card-head">
               <h3>{restaurant.name}</h3>
-              <span className="muted-label">
-                {restaurant.menu.length} item
-                {restaurant.menu.length === 1 ? "" : "s"}
-              </span>
             </div>
             <p>{restaurant.cuisine}</p>
             <div className="run-meta">

@@ -1,3 +1,4 @@
+import { formatEuroPrice } from "../../helpers/currency";
 import { MenuItem } from "../homeTypes";
 
 type RestaurantMenuSectionProps = {
@@ -6,6 +7,13 @@ type RestaurantMenuSectionProps = {
   description?: string;
   onAddItem?: () => void;
   onSelectItem?: (item: MenuItem) => void;
+  onDeleteItem?: (item: MenuItem) => void;
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+    tooltip?: string;
+  };
 };
 
 function RestaurantMenuSection({
@@ -14,6 +22,8 @@ function RestaurantMenuSection({
   description = "Keep this restaurant lineup current.",
   onAddItem,
   onSelectItem,
+  onDeleteItem,
+  secondaryAction,
 }: RestaurantMenuSectionProps) {
   const hasMenuItems = menu.length > 0;
   const menuStatusLabel = hasMenuItems
@@ -27,14 +37,27 @@ function RestaurantMenuSection({
           <h4>{title}</h4>
           <p className="muted-label">{description}</p>
         </div>
-        <button
-          className="btn btn-ghost"
-          type="button"
-          onClick={onAddItem}
-          disabled={!onAddItem}
-        >
-          Add item
-        </button>
+        <div className="menu-section-actions">
+          {secondaryAction && (
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={secondaryAction.onClick}
+              disabled={secondaryAction.disabled}
+              title={secondaryAction.tooltip}
+            >
+              {secondaryAction.label}
+            </button>
+          )}
+          <button
+            className="btn btn-ghost"
+            type="button"
+            onClick={onAddItem}
+            disabled={!onAddItem}
+          >
+            Add item
+          </button>
+        </div>
       </div>
       <div className="restaurant-menu-list-panel">
         <p className="muted-label restaurant-menu-count">{menuStatusLabel}</p>
@@ -43,7 +66,7 @@ function RestaurantMenuSection({
             {menu.map((item) => (
               <article
                 key={item.id}
-                className="menu-card list-card list-card--inline"
+                className={`menu-card list-card list-card--inline ${onDeleteItem ? "menu-card--with-delete" : ""}`}
                 onClick={() => onSelectItem?.(item)}
                 role={onSelectItem ? "button" : undefined}
                 tabIndex={onSelectItem ? 0 : -1}
@@ -59,13 +82,23 @@ function RestaurantMenuSection({
               >
                 <div className="menu-card-info">
                   <h4>{item.name}</h4>
-                  <p>{item.price}</p>
+                  <p>{formatEuroPrice(item.price)}</p>
                 </div>
-                <span
-                  className={`availability ${item.available ? "is-available" : "is-soldout"}`}
-                >
-                  {item.available ? "Active" : "Hidden"}
-                </span>
+                {onDeleteItem && (
+                  <button
+                    type="button"
+                    className="menu-card-delete"
+                    aria-label={`Delete ${item.name}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDeleteItem(item);
+                    }}
+                  >
+                    <span aria-hidden="true" className="menu-card-delete-icon">
+                      ×
+                    </span>
+                  </button>
+                )}
               </article>
             ))}
           </div>

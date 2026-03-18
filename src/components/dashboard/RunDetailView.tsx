@@ -1,3 +1,4 @@
+import { formatEuroPrice } from "../../helpers/currency";
 import { MenuItem, Restaurant } from "../homeTypes";
 
 type RunDetailViewProps = {
@@ -49,7 +50,7 @@ function RunDetailView({
             >
               <div className="menu-card-info">
                 <h4>{item.name}</h4>
-                <p>{item.price}</p>
+                <p>{formatEuroPrice(item.price)}</p>
               </div>
               <button
                 className="btn btn-ghost btn-icon"

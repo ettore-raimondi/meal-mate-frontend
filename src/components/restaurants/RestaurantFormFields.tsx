@@ -44,14 +44,6 @@ function RestaurantFormFields({ values, onChange }: RestaurantFormFieldsProps) {
             placeholder="https://example.com"
           />
         </label>
-        <label>
-          Cuisine
-          <input
-            value={values.cuisine}
-            onChange={(event) => onChange("cuisine", event.target.value)}
-            placeholder="Cuisine style"
-          />
-        </label>
       </div>
       <label>
         Description
