@@ -1,4 +1,4 @@
-import { FoodRun, Restaurant } from "../homeTypes";
+import { FoodRun, Restaurant } from "../../components/homeTypes";
 
 type RunListProps = {
   runs: FoodRun[];
@@ -29,6 +29,7 @@ function RunList({ runs, activeRunId, restaurantMap, onSelect }: RunListProps) {
             </div>
             <p>{runRest?.name}</p>
             <div className="run-meta">
+              <span>{run.organizer}</span>
               <span>{run.cutoff}</span>
               <span>{run.orders} orders</span>
               <span>{run.eta}</span>

@@ -1,4 +1,4 @@
-import type { Restaurant } from "../../homeTypes";
+import type { Restaurant } from "../../../components/homeTypes";
 import RestaurantList from "../RestaurantList";
 
 type RestaurantDirectoryPanelProps = {

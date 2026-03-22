@@ -1,5 +1,5 @@
 import { type FormEvent } from "react";
-import type { MenuItem, Restaurant } from "../../homeTypes";
+import type { MenuItem, Restaurant } from "../../../components/homeTypes";
 import RestaurantFormFields from "../RestaurantFormFields";
 import RestaurantMenuEditor from "../RestaurantMenuEditor";
 import RestaurantMenuSection from "../RestaurantMenuSection";

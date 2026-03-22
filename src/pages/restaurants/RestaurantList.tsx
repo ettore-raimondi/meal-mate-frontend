@@ -1,4 +1,4 @@
-import { Restaurant } from "../homeTypes";
+import { Restaurant } from "../../components/homeTypes";
 import { RestaurantSelectionHandler } from "./types";
 
 type RestaurantListProps = {

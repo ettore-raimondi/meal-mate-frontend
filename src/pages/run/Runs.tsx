@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Sidebar from "./Sidebar";
-import { RunStatus, type UserRun, userRunsSeed } from "../data/userRuns";
-import { CreateRunPanel, type RunFormData } from "./run-create";
+import Sidebar from "../../components/Sidebar";
+import { RunStatus, type UserRun, userRunsSeed } from "../../data/userRuns";
+import { CreateRunPanel, type RunFormData } from ".";
 
 const STATUS_CONFIG: Record<RunStatus, { label: string; tone: string }> = {
   "in-progress": { label: "In progress", tone: "progress" },

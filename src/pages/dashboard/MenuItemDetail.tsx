@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { formatEuroPrice } from "../../helpers/currency";
-import { MenuItem } from "../homeTypes";
+import { MenuItem } from "../../components/homeTypes";
 
 type MenuItemDetailProps = {
   menuItem: MenuItem;

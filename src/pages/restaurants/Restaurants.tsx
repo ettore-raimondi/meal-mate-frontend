@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Sidebar from "../Sidebar";
-import type { MenuItem, Restaurant } from "../homeTypes";
+import Sidebar from "../../components/Sidebar";
+import type { MenuItem, Restaurant } from "../../components/homeTypes";
 import {
   emptyMenuDraft,
   emptyRestaurantForm,
@@ -25,7 +25,7 @@ import {
   scrapeMenuItems,
   updateMenuItems as updateMenuItemsService,
 } from "../../services/menu-item";
-import { confirmToast } from "../toast/confirmToast";
+import { confirmToast } from "../../components/toast/confirmToast";
 import { toast } from "sonner";
 import PanelHeader from "./components/PanelHeader";
 import RestaurantDirectoryPanel from "./components/RestaurantDirectoryPanel";

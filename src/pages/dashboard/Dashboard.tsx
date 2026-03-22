@@ -4,10 +4,71 @@ import { formatEuroPrice } from "../../helpers/currency";
 import MenuItemDetail from "./MenuItemDetail";
 import RunDetailView from "./RunDetailView";
 import RunList from "./RunList";
-import { FoodRun, MenuItem, PanelView, Restaurant } from "../homeTypes";
-import Sidebar from "../Sidebar";
+import {
+  FoodRun,
+  MenuItem,
+  PanelView,
+  Restaurant,
+} from "../../components/homeTypes";
+import Sidebar from "../../components/Sidebar";
 
-const restaurants: Restaurant[] = [];
+const restaurants: Restaurant[] = [
+  {
+    id: "rest-1",
+    name: "Lotus Bowl",
+    address: "12 Garden Lane",
+    phoneNumber: "+353 1 234 5678",
+    websiteUrl: "",
+    description: "Fresh Asian-inspired bowls.",
+    cuisine: "Asian Fusion",
+    menu: [
+      {
+        id: "m-1",
+        name: "Spicy Basil Pad Thai",
+        price: "14.50",
+        description:
+          "Rice noodles, tofu, peanuts, and a rich basil-chilli sauce.",
+      },
+      {
+        id: "m-2",
+        name: "Green Mango Salad",
+        price: "10.00",
+        description:
+          "Shredded green mango with lime dressing and toasted sesame.",
+      },
+      {
+        id: "m-3",
+        name: "Miso Glazed Aubergine",
+        price: "12.00",
+        description:
+          "Charred aubergine halves with white miso and spring onion.",
+      },
+    ],
+  },
+  {
+    id: "rest-2",
+    name: "Ridgeway Sandwich",
+    address: "5 Market Street",
+    phoneNumber: "+353 1 987 6543",
+    websiteUrl: "",
+    description: "Handcrafted sandwiches and cold brew.",
+    cuisine: "Deli",
+    menu: [
+      {
+        id: "m-4",
+        name: "Turkey Club",
+        price: "11.50",
+        description: "Smoked turkey, bacon, lettuce, tomato on sourdough.",
+      },
+      {
+        id: "m-5",
+        name: "Cold Brew",
+        price: "4.00",
+        description: "24-hour cold-steeped single origin, served over ice.",
+      },
+    ],
+  },
+];
 
 const runs: FoodRun[] = [
   {
@@ -65,6 +126,7 @@ const fromRouteMenuSegment = (segment?: string) => {
 function Dashboard() {
   const [activeRunId, setActiveRunId] = useState(runs[0]?.id ?? "");
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  const [orderedItemIds, setOrderedItemIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { runNumber, menuItemNumber } = useParams<{
     runNumber?: string;
@@ -119,6 +181,22 @@ function Dashboard() {
     );
   };
 
+  const handleToggleOrder = (itemId: string) => {
+    setOrderedItemIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  };
+
+  const handlePlaceOrder = () => {
+    // TODO: submit order to API
+  };
+
   const closeMenuDetail = () => {
     const targetRunId = routeRunId ?? activeRunId;
     if (targetRunId) {
@@ -140,9 +218,10 @@ function Dashboard() {
 
   const panelSubtitle = (() => {
     if (panelView === "runDetail") {
-      return runRestaurant
-        ? `${runRestaurant.name} · ${runRestaurant.cuisine}`
-        : "Review the selected run";
+      const parts = [];
+      if (runRestaurant) parts.push(runRestaurant.name);
+      if (activeRun) parts.push(`Organised by ${activeRun.organizer}`);
+      return parts.length > 0 ? parts.join(" · ") : "Review the selected run";
     }
     if (panelView === "menuDetail" && activeMenuItem) {
       const restaurantLabel = runRestaurant ? `${runRestaurant.name}` : "";
@@ -226,10 +305,7 @@ function Dashboard() {
                   onClick={backButton.onClick}
                   type="button"
                 >
-                  <span className="back-link-icon" aria-hidden="true">
-                    ←
-                  </span>
-                  <span>{backButton.label}</span>
+                  ← {backButton.label}
                 </button>
               )}
               <div className="panel-title-stack">
@@ -269,14 +345,33 @@ function Dashboard() {
             {panelView !== "runs" && (
               <div className="run-detail scrollable">
                 {panelView === "menuDetail" && activeMenuItem ? (
-                  <MenuItemDetail menuItem={activeMenuItem} />
+                  <MenuItemDetail
+                    menuItem={activeMenuItem}
+                    actionSlot={
+                      <button
+                        className={`btn ${
+                          orderedItemIds.has(activeMenuItem.id)
+                            ? "btn-outline btn-danger"
+                            : ""
+                        }`}
+                        type="button"
+                        onClick={() => handleToggleOrder(activeMenuItem.id)}
+                      >
+                        {orderedItemIds.has(activeMenuItem.id)
+                          ? "Remove item"
+                          : "Order item"}
+                      </button>
+                    }
+                  />
                 ) : (
                   <RunDetailView
-                    runRestaurant={runRestaurant}
                     menuItems={menuItems}
                     activeRunId={activeRun?.id}
                     activeItemId={effectiveMenuItemId ?? null}
+                    orderedItemIds={orderedItemIds}
                     onSelectMenuItem={openMenuDetail}
+                    onToggleOrder={handleToggleOrder}
+                    onPlaceOrder={handlePlaceOrder}
                   />
                 )}
               </div>

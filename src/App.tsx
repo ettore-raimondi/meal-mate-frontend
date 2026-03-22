@@ -1,13 +1,13 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
-import Login from "./components/Login";
-import Signup from "./components/Signup";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import { Toaster } from "sonner";
-import Dashboard from "./components/dashboard/Dashboard";
-import Landing from "./components/Landing";
-import Restaurants from "./components/restaurants/Restaurants";
-import Orders from "./components/Orders";
-import Runs from "./components/Runs";
+import Dashboard from "./pages/dashboard/Dashboard";
+import Landing from "./pages/Landing";
+import Restaurants from "./pages/restaurants/Restaurants";
+import Orders from "./pages/Orders";
+import Runs from "./pages/run/Runs";
 
 function App() {
   return (
@@ -24,6 +24,7 @@ function App() {
           element={<Dashboard />}
         />
         <Route path="/runs" element={<Runs />} />
+        <Route path="/runs/:runId" element={<Runs />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/restaurants" element={<Restaurants />} />
         <Route

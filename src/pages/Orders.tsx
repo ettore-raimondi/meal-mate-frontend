@@ -1,4 +1,4 @@
-import Sidebar from "./Sidebar";
+import Sidebar from "../components/Sidebar";
 import { ordersSeed, OrderStatus } from "../data/orders";
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; tone: string }> = {
