@@ -43,11 +43,7 @@ function PanelHeader({
       </div>
       {!viewingDetail && (
         <div className="panel-head-actions">
-          <button
-            className="btn btn-ghost"
-            type="button"
-            onClick={onBeginCreate}
-          >
+          <button className="btn" type="button" onClick={onBeginCreate}>
             New restaurant
           </button>
         </div>

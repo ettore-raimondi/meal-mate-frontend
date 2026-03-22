@@ -326,9 +326,7 @@ function Dashboard() {
             </div>
 
             <div className="panel-actions">
-              {panelView === "runs" && (
-                <button className="btn btn-ghost btn-compact">New Run</button>
-              )}
+              {panelView === "runs" && <button className="btn">New Run</button>}
             </div>
           </div>
 

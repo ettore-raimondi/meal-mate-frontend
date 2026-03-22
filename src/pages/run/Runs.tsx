@@ -162,7 +162,7 @@ function Runs() {
               <div className="panel-actions">
                 <button
                   type="button"
-                  className="btn btn-compact"
+                  className="btn"
                   onClick={handleOpenCreatePanel}
                   disabled={disableCreateButton}
                 >

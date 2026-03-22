@@ -49,7 +49,7 @@ function Login() {
             required
           />
 
-          <button className="btn" type="submit">
+          <button className="btn btn-large" type="submit">
             Continue
           </button>
         </form>

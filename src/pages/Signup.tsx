@@ -126,7 +126,11 @@ function Signup() {
             required
           />
 
-          <button className="btn" type="submit" onClick={handleRegister}>
+          <button
+            className="btn btn-large"
+            type="submit"
+            onClick={handleRegister}
+          >
             Create account
           </button>
         </form>

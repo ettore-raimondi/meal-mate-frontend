@@ -12,11 +12,11 @@ const Landing = () => {
           <p>Manage menus, track orders, and keep every run on schedule.</p>
         </header>
         <div className="flex-center">
-          <button className="btn" onClick={() => navigate("/login")}>
+          <button className="btn btn-large" onClick={() => navigate("/login")}>
             Login
           </button>
           <button
-            className="btn btn-outline"
+            className="btn btn-outline btn-large"
             onClick={() => navigate("/signup")}
           >
             Sign Up
