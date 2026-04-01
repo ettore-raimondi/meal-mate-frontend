@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import { CreateRunPanel, type RunFormData } from ".";
@@ -19,22 +19,6 @@ const STATUS_RANK: Record<RunStatus, number> = {
   COMPLETED: 4,
 };
 
-const formatDeadlineLabel = (deadline: string) => {
-  const parsed = new Date(deadline);
-  if (Number.isNaN(parsed.getTime())) {
-    return "Closes soon";
-  }
-  const dateLabel = parsed.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-  const timeLabel = parsed.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `Closes ${dateLabel} · ${timeLabel}`;
-};
-
 const parseNumericParam = (value?: string) => {
   if (value === undefined) {
     return undefined;
@@ -52,6 +36,15 @@ function Runs() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const isEditingRoute = routeRunId !== undefined;
+
+  const loadRunsAndRestaurants = useCallback(async () => {
+    const [runsResponse, restaurantsResponse] = await Promise.all([
+      fetchRuns(),
+      fetchRestaurants(),
+    ]);
+    setRuns(runsResponse);
+    setRestaurants(restaurantsResponse);
+  }, []);
 
   const restaurantsMap = useMemo(() => {
     const map = new Map<number, Restaurant>();
@@ -111,30 +104,20 @@ function Runs() {
       status: "OPEN",
     });
 
-    if (createdRun.id) {
-      try {
-        const updatedRestaurants = await fetchRestaurants();
-        setRestaurants(updatedRestaurants);
-      } catch (error) {
-        console.error("Failed to refresh restaurants", error);
-      }
-      toast.success("Run created successfully!");
-      navigate("/runs");
-      return;
+    if (!createdRun.id) throw new Error("Created run is missing an id");
+
+    try {
+      await loadRunsAndRestaurants();
+    } catch (error) {
+      console.error("Failed to refresh runs data", error);
     }
-    setIsCreateOpen(false);
+    toast.success("Run created successfully!");
+    navigate("/runs");
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const runs = await fetchRuns();
-      const restaurants = await fetchRestaurants();
-
-      setRestaurants(restaurants);
-      setRuns(runs);
-    };
-    fetchData();
-  }, []);
+    void loadRunsAndRestaurants();
+  }, [loadRunsAndRestaurants]);
 
   const handleOpenCreatePanel = () => {
     setIsCreateOpen(true);

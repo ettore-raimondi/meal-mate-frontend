@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import type { MenuItem, Restaurant } from "../../components/homeTypes";
@@ -34,7 +34,6 @@ import RestaurantDetailPanel, {
 } from "./components/RestaurantDetailPanel";
 import {
   NEW_RESTAURANT_SLUG,
-  type RestaurantCollection,
   useRestaurantCollections,
   useRestaurantSelection,
 } from "./hooks";
@@ -67,11 +66,32 @@ function Restaurants() {
   const [newRestaurantMenu, setNewRestaurantMenu] = useState<MenuItem[]>([]);
   const [isSavingNearby, setIsSavingNearby] = useState(false);
 
-  const {
-    addRestaurantToCollection,
-    updateRestaurantInCollection,
-    removeRestaurantFromCollection,
-  } = useRestaurantCollections(setRestaurants, setRestaurantsNearMe);
+  const loadNearbyRestaurants = useCallback(async () => {
+    const coordinates = await fetchCoordinates();
+    if (!coordinates) {
+      return;
+    }
+    const nearbyRestaurants = await fetchRestaurantsNearMe(
+      coordinates.latitude,
+      coordinates.longitude,
+    );
+    const normalized = nearbyRestaurants.map((restaurant) => ({
+      ...restaurant,
+      menu: restaurant.menu ?? [],
+    }));
+    setRestaurantsNearMe(normalized);
+  }, []);
+
+  const loadOwnedRestaurants = useCallback(async () => {
+    const ownedRestaurants = await fetchRestaurants();
+    setRestaurants(ownedRestaurants);
+    return ownedRestaurants;
+  }, []);
+
+  const { updateRestaurantInCollection } = useRestaurantCollections(
+    setRestaurants,
+    setRestaurantsNearMe,
+  );
 
   const {
     isCreatingRestaurant,
@@ -135,25 +155,11 @@ function Restaurants() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const coordinates = await fetchCoordinates();
-      if (coordinates) {
-        const { latitude, longitude } = coordinates;
-        const nearbyRestaurants = await fetchRestaurantsNearMe(
-          latitude,
-          longitude,
-        );
-        const normalized = nearbyRestaurants.map((restaurant) => ({
-          ...restaurant,
-          menu: restaurant.menu ?? [],
-        }));
-        setRestaurantsNearMe(normalized);
-      }
-
-      const restaurants = await fetchRestaurants();
-      setRestaurants(restaurants);
+      await loadNearbyRestaurants();
+      await loadOwnedRestaurants();
     };
     fetchData();
-  }, []);
+  }, [loadNearbyRestaurants, loadOwnedRestaurants]);
 
   const panelTitle = isCreatingRestaurant
     ? "Add Restaurant"
@@ -239,15 +245,9 @@ function Restaurants() {
   };
 
   const handleDeleteRestaurant = async (restaurantId: number) => {
-    const source: RestaurantCollection =
-      activeRestaurantSource ??
-      (restaurantsNearMe.some((restaurant) => restaurant.id === restaurantId)
-        ? "nearby"
-        : "owned");
-
     try {
       await deleteRestaurant(restaurantId);
-      removeRestaurantFromCollection(source, restaurantId);
+      await loadOwnedRestaurants();
       navigate("/restaurants");
     } catch (error) {
       console.error("Failed to delete restaurant:", error);
@@ -383,18 +383,14 @@ function Restaurants() {
     }
 
     const createdRestaurant = await createRestaurant(restaurantForm);
-    let createdMenuItems: MenuItem[] = [];
     if (newRestaurantMenu.length > 0) {
-      createdMenuItems = await saveMenuItems(
-        createdRestaurant.id,
-        newRestaurantMenu,
-      );
+      await saveMenuItems(createdRestaurant.id, newRestaurantMenu);
     }
-
-    addRestaurantToCollection("owned", {
-      ...createdRestaurant,
-      menu: createdMenuItems,
-    });
+    try {
+      await loadOwnedRestaurants();
+    } catch (error) {
+      console.error("Failed to refresh restaurants", error);
+    }
     setNewRestaurantMenu([]);
     navigate(`/restaurants/${createdRestaurant.id}`);
     toast.success(`${createdRestaurant.name} has been created.`);
@@ -410,20 +406,16 @@ function Restaurants() {
       restaurantForm,
     );
 
-    const updatedMenuItems = await updateMenuItemsService(
+    await updateMenuItemsService(
       activeRestaurant.id,
       activeRestaurant.menu ?? [],
     );
 
-    updateRestaurantInCollection(
-      activeRestaurantSource,
-      activeRestaurant.id,
-      (restaurant) => ({
-        ...restaurant,
-        ...updatedRestaurant,
-        menu: updatedMenuItems,
-      }),
-    );
+    try {
+      await loadOwnedRestaurants();
+    } catch (error) {
+      console.error("Failed to refresh restaurants", error);
+    }
     toast.success(`${updatedRestaurant.name} has been updated.`);
   };
 
@@ -462,8 +454,8 @@ function Restaurants() {
           : {}),
       };
       const createdRestaurant = await createRestaurant(payload);
-      addRestaurantToCollection("owned", createdRestaurant);
-      removeRestaurantFromCollection("nearby", activeRestaurant.id);
+      await loadOwnedRestaurants();
+      await loadNearbyRestaurants();
       navigate(`/restaurants/${createdRestaurant.id}`);
       toast.success(`${createdRestaurant.name} saved to My Restaurants.`);
     } catch (error) {

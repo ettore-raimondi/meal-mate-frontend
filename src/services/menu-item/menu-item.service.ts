@@ -1,5 +1,5 @@
 import type { MenuItem } from ".";
-import type { MenuItemResponse } from "./menu-item.api";
+import type { MenuItemResponse } from "./menu-item.types";
 import { httpClient } from "../http";
 import { mapToMenuItems } from "./menu-item.mapper";
 

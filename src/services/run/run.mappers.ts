@@ -1,4 +1,4 @@
-import type { Run, RunResponse } from "./run.api";
+import type { Run, RunResponse } from "./run.types";
 
 export function mapRunResponseToRuns(runResponse: RunResponse[]): Run[] {
   return runResponse.map((response) => ({

@@ -1,4 +1,4 @@
-import type { MenuItemResponse } from "./menu-item.api";
+import type { MenuItemResponse } from "./menu-item.types";
 import type { MenuItem } from "./types";
 
 export function mapToMenuItems(menuItems: MenuItemResponse[]): MenuItem[] {

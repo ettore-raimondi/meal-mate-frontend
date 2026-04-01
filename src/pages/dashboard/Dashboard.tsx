@@ -9,6 +9,8 @@ import Sidebar from "../../components/Sidebar";
 import { fetchRuns, type Run } from "../../services/run";
 import { fetchRestaurants, type Restaurant } from "../../services/restaurant";
 import { getStatusMeta } from "./runStatusMeta";
+import { createOrder } from "../../services/order/order.service";
+import { toast } from "sonner";
 
 const toRouteRunSegment = (id: number) => encodeURIComponent(String(id));
 const toRouteMenuSegment = (id: number) => encodeURIComponent(String(id));
@@ -36,6 +38,7 @@ function Dashboard() {
   const [hasLoadedRuns, setHasLoadedRuns] = useState(false);
   const [activeItemId, setActiveItemId] = useState<number | null>(null);
   const [orderedItemIds, setOrderedItemIds] = useState<Set<number>>(new Set());
+  const [orderNote, setOrderNote] = useState("");
   const navigate = useNavigate();
   const { runNumber, menuItemNumber } = useParams<{
     runNumber?: string;
@@ -113,8 +116,15 @@ function Dashboard() {
     });
   };
 
-  const handlePlaceOrder = () => {
-    // TODO: submit order to API
+  const handlePlaceOrder = async () => {
+    const order = await createOrder({
+      foodRun: activeRunId!,
+      menuItems: Array.from(orderedItemIds),
+      note: orderNote,
+    });
+
+    toast.success(`Order #${order.id} has been placed.`);
+    navigate(`/orders/${order.id}`);
   };
 
   const closeMenuDetail = () => {
@@ -330,6 +340,8 @@ function Dashboard() {
                     onSelectMenuItem={openMenuDetail}
                     onToggleOrder={handleToggleOrder}
                     onPlaceOrder={handlePlaceOrder}
+                    orderNote={orderNote}
+                    onOrderNoteChange={setOrderNote}
                   />
                 )}
               </div>

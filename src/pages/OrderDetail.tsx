@@ -2,20 +2,22 @@ import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import OrderSummaryCard from "../components/orders/OrderSummaryCard";
 import type { OrderSummaryItem } from "../components/orders/OrderSummaryCard";
-import { ordersSeed, ORDER_STATUS_META } from "../data/orders";
+import { useOrders } from "../hooks/useOrders";
+import { getOrderStatusMeta } from "./orders/orderStatusMeta";
 
 function OrderDetail() {
   const navigate = useNavigate();
+  const { enrichedOrders } = useOrders();
   const { orderId: orderIdParam } = useParams<{ orderId: string }>();
   const parsedOrderId =
     orderIdParam !== undefined ? Number(orderIdParam) : undefined;
   const order =
     parsedOrderId !== undefined && !Number.isNaN(parsedOrderId)
-      ? ordersSeed.find((entry) => entry.id === parsedOrderId)
+      ? enrichedOrders.find((entry) => entry.id === parsedOrderId)
       : undefined;
-  const statusMeta = order ? ORDER_STATUS_META[order.status] : null;
+  const statusMeta = getOrderStatusMeta(order?.status);
   const summaryItems: OrderSummaryItem[] = order
-    ? order.lineItems.map((item) => ({
+    ? order.menuItems.map((item) => ({
         id: item.id,
         name: item.name,
         price: item.price,
@@ -36,7 +38,7 @@ function OrderDetail() {
               </button>
               <div className="panel-title-stack">
                 <div className="panel-title-row">
-                  <h2>{order ? order.restaurant : "Order not found"}</h2>
+                  <h2>{order ? order.restaurant.name : "Order not found"}</h2>
                   {statusMeta && (
                     <span
                       className={`status-pill panel-status-pill ${statusMeta.tone}`}
@@ -47,7 +49,7 @@ function OrderDetail() {
                 </div>
                 <p className="panel-subtitle">
                   {order
-                    ? `${order.items} · ${order.placedAt}`
+                    ? `${order.menuItems.length} · ${order.createdAt}`
                     : "We couldn't find that order. Return to your history."}
                 </p>
               </div>
@@ -64,22 +66,24 @@ function OrderDetail() {
                       <h3>{order.id}</h3>
                     </div>
                     <div className="order-detail-meta-total">
-                      <span className="muted-label">{order.placedAt}</span>
+                      <span className="muted-label">
+                        {order.createdAt.toDateString()}
+                      </span>
                       <strong>{order.total}</strong>
                     </div>
                   </div>
                   <div className="order-detail-fields">
                     <div>
                       <p className="muted-label">Restaurant</p>
-                      <strong>{order.restaurant}</strong>
+                      <strong>{order.restaurant.name}</strong>
                     </div>
                     <div>
                       <p className="muted-label">Status</p>
-                      <strong>{statusMeta?.label}</strong>
+                      <strong>{statusMeta?.label ?? "Unknown"}</strong>
                     </div>
                     <div>
                       <p className="muted-label">Items</p>
-                      <strong>{order.items}</strong>
+                      <strong>{order.menuItems.length}</strong>
                     </div>
                   </div>
                   <OrderSummaryCard

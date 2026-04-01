@@ -11,6 +11,8 @@ type RunDetailViewProps = {
   onSelectMenuItem: (itemId: number) => void;
   onToggleOrder: (itemId: number) => void;
   onPlaceOrder: () => void;
+  orderNote: string;
+  onOrderNoteChange: (value: string) => void;
 };
 
 function RunDetailView({
@@ -21,6 +23,8 @@ function RunDetailView({
   onSelectMenuItem,
   onToggleOrder,
   onPlaceOrder,
+  orderNote,
+  onOrderNoteChange,
 }: RunDetailViewProps) {
   const orderedItems = menuItems.filter((item) => orderedItemIds.has(item.id));
   const orderSummaryItems: OrderSummaryItem[] = orderedItems.map((item) => ({
@@ -84,6 +88,17 @@ function RunDetailView({
           <p className="muted-label">Menu coming soon.</p>
         )}
       </div>
+
+      <label>
+        Note for the organizer (optional)
+        <textarea
+          id="order-note-input"
+          placeholder="Add extra instructions or delivery notes"
+          rows={2}
+          value={orderNote}
+          onChange={(event) => onOrderNoteChange(event.target.value)}
+        />
+      </label>
 
       <OrderSummaryCard
         items={orderSummaryItems}

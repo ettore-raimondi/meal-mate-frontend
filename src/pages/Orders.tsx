@@ -1,21 +1,19 @@
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import {
-  ordersSeed,
-  ORDER_STATUS_META,
-  ORDER_STATUS_RANK,
-} from "../data/orders";
+import { useOrders } from "../hooks/useOrders";
+import { getOrderStatusMeta } from "./orders/orderStatusMeta";
 
 function Orders() {
   const navigate = useNavigate();
-  const sortedOrders = [...ordersSeed].sort((a, b) => {
-    const scoreA = ORDER_STATUS_RANK[a.status];
-    const scoreB = ORDER_STATUS_RANK[b.status];
-    if (scoreA !== scoreB) {
-      return scoreA - scoreB;
-    }
-    return b.placedAt.localeCompare(a.placedAt);
-  });
+  const { enrichedOrders } = useOrders();
+  // const sortedOrders = [...orders].sort((a, b) => {
+  //   const scoreA = ORDER_STATUS_RANK[a.status];
+  //   const scoreB = ORDER_STATUS_RANK[b.status];
+  //   if (scoreA !== scoreB) {
+  //     return scoreA - scoreB;
+  //   }
+  //   return b.placedAt.localeCompare(a.placedAt);
+  // });
 
   return (
     <div className="dashboard">
@@ -37,9 +35,9 @@ function Orders() {
 
           <div className="runs-grid">
             <div className="runs-list scrollable">
-              {sortedOrders.length > 0 ? (
-                sortedOrders.map((order) => {
-                  const statusMeta = ORDER_STATUS_META[order.status];
+              {enrichedOrders.length > 0 ? (
+                enrichedOrders.map((order) => {
+                  const statusMeta = getOrderStatusMeta(order.status);
                   return (
                     <article
                       key={order.id}
@@ -56,15 +54,19 @@ function Orders() {
                     >
                       <div className="order-card-head">
                         <div className="order-card-title">
-                          <h3>{order.restaurant}</h3>
-                          <p>{order.items}</p>
+                          <h3>{order.restaurant.name}</h3>
+                          <p>{order.menuItems.length} items</p>
                         </div>
-                        <span className={`status-pill ${statusMeta.tone}`}>
-                          {statusMeta.label}
-                        </span>
+                        {statusMeta && (
+                          <span className={`status-pill ${statusMeta.tone}`}>
+                            {statusMeta.label}
+                          </span>
+                        )}
                       </div>
                       <div className="order-card-meta">
-                        <span className="muted-label">{order.placedAt}</span>
+                        <span className="muted-label">
+                          {order.createdAt.toDateString()}
+                        </span>
                         <strong>{order.total}</strong>
                       </div>
                     </article>

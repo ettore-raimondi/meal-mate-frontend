@@ -7,10 +7,10 @@ export function getDecodedToken(): {
   user_id: number;
   jti: string;
   token_type: string;
-} | null {
+} {
   const token = localStorage.getItem("token");
   if (!token) {
-    return null;
+    throw new Error("No token found, is the user authenticated?");
   }
 
   try {
@@ -19,7 +19,7 @@ export function getDecodedToken(): {
     return JSON.parse(decodedPayload);
   } catch (error) {
     console.error("Failed to decode token:", error);
-    return null;
+    throw new Error("Failed to decode token");
   }
 }
 

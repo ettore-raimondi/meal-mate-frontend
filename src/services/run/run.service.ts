@@ -1,6 +1,6 @@
 import { getDecodedToken } from "../auth";
 import { httpClient } from "../http";
-import type { CreateRunPayload } from "./run.api";
+import type { CreateRunPayload } from "./run.types";
 import { mapRunResponseToRuns } from "./run.mappers";
 
 export async function createRun({

@@ -4,8 +4,13 @@ import type {
   MenuItemResponse,
   UpdateMenuItemPayload,
 } from "../menu-item";
+import type { OrderRequestPayload, OrderResponse } from "../order/order.types";
 import type { RestaurantDTO } from "../restaurant";
-import type { CreateRunPayload, RunResponse, RunStatus } from "../run/run.api";
+import type {
+  CreateRunPayload,
+  RunResponse,
+  RunStatus,
+} from "../run/run.types";
 
 /**
  * This type defines the structure of the API endpoints used in the application.
@@ -177,6 +182,17 @@ export type ApiEndpoints = {
     };
     GET: {
       response: RunResponse[];
+      body: never;
+      params: never;
+    };
+  };
+  "orders/": {
+    POST: {
+      response: OrderResponse;
+      body: OrderRequestPayload;
+    };
+    GET: {
+      response: OrderResponse[];
       body: never;
       params: never;
     };
