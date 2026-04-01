@@ -32,3 +32,10 @@ export type Run = {
   updatedAt?: Date;
   organizerName: string;
 };
+
+export type RunEnriched = Omit<Run, "restaurantId"> & {
+  restaurant: {
+    id: number;
+    name: string;
+  };
+};

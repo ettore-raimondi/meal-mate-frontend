@@ -13,7 +13,7 @@ import { AppContext } from "./context/AppContext";
 import { useRestaurants } from "./hooks/useRestaurants";
 
 function App() {
-  const restaurants = useRestaurants();
+  const { restaurants } = useRestaurants();
 
   return (
     <>

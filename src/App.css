@@ -625,6 +625,11 @@ a:hover {
   gap: 0.85rem;
 }
 
+.run-history-card.is-ordered {
+  border-color: rgba(59, 130, 246, 0.26);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
 .run-history-card-head {
   display: flex;
   justify-content: space-between;
@@ -870,6 +875,14 @@ margin-left: auto;
   border-color: rgba(148, 163, 184, 0.3);
 }
 
+.status-pill.ordered {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1e40af;
+  border-color: rgba(59, 130, 246, 0.28);
+  font-size: 0.72rem;
+  padding: 0.2rem 0.65rem;
+}
+
 .confirm-toast {
   width: min(360px, 90vw);
   background: #fff;
@@ -1091,6 +1104,11 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+.run-card.is-ordered {
+  border-color: rgba(59, 130, 246, 0.26);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
 }
 
 .run-card h3 {

@@ -65,7 +65,7 @@ function Orders() {
                       </div>
                       <div className="order-card-meta">
                         <span className="muted-label">
-                          {order.createdAt.toDateString()}
+                          {order.createdAtFormatted}
                         </span>
                         <strong>{order.total}</strong>
                       </div>

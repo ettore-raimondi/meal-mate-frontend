@@ -2,6 +2,8 @@ import { formatEuroPrice } from "../../helpers/currency";
 import type { MenuItem } from "../../components/homeTypes";
 import OrderSummaryCard from "../../components/orders/OrderSummaryCard";
 import type { OrderSummaryItem } from "../../components/orders/OrderSummaryCard";
+import { useEffect } from "react";
+import { fetchLatestOrderForRun } from "../../services/order/order.service";
 
 type RunDetailViewProps = {
   menuItems: MenuItem[];
@@ -13,6 +15,7 @@ type RunDetailViewProps = {
   onPlaceOrder: () => void;
   orderNote: string;
   onOrderNoteChange: (value: string) => void;
+  onOrderedItemsChange: (items: Set<number>) => void;
 };
 
 function RunDetailView({
@@ -25,6 +28,7 @@ function RunDetailView({
   onPlaceOrder,
   orderNote,
   onOrderNoteChange,
+  onOrderedItemsChange,
 }: RunDetailViewProps) {
   const orderedItems = menuItems.filter((item) => orderedItemIds.has(item.id));
   const orderSummaryItems: OrderSummaryItem[] = orderedItems.map((item) => ({
@@ -32,6 +36,28 @@ function RunDetailView({
     name: item.name,
     price: item.price,
   }));
+
+  useEffect(() => {
+    (async () => {
+      if (!activeRunId) {
+        onOrderedItemsChange(new Set());
+        onOrderNoteChange("");
+        return;
+      }
+
+      const order = await fetchLatestOrderForRun(activeRunId);
+
+      if (!order) {
+        onOrderedItemsChange(new Set());
+        onOrderNoteChange("");
+        return;
+      }
+
+      onOrderedItemsChange(new Set(order.menuItems));
+      onOrderNoteChange(order.note ?? "");
+    })();
+  }, [activeRunId, onOrderNoteChange, onOrderedItemsChange]);
+
   return (
     <section className="menu-section">
       <div className="menu-section-head">

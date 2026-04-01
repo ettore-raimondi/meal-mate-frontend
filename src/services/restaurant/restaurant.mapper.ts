@@ -1,4 +1,4 @@
-import type { RestaurantDTO } from ".";
+import type { RestaurantDTO, RestaurantEnriched } from ".";
 import { mapToMenuItems } from "../menu-item/menu-item.mapper";
 
 export function mapToRestaurants(restaurants: RestaurantDTO[]) {
@@ -15,4 +15,10 @@ export function mapToRestaurants(restaurants: RestaurantDTO[]) {
     cuisine: restaurant.cuisine,
     menuItems: mapToMenuItems(restaurant.menu_items || []),
   }));
+}
+
+export function mapToEnrichedRestaurants(
+  restaurants: ReturnType<typeof mapToRestaurants>,
+): RestaurantEnriched[] {
+  return restaurants;
 }

@@ -1,15 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import { CreateRunPanel, type RunFormData } from ".";
-import {
-  createRun,
-  fetchRuns,
-  type Run,
-  type RunStatus,
-} from "../../services/run";
+import { createRun, type RunStatus } from "../../services/run";
+import { useRuns } from "../../hooks/useRuns";
+import { useOrders } from "../../hooks/useOrders";
 import { toast } from "sonner";
-import { fetchRestaurants, type Restaurant } from "../../services/restaurant";
 import { getStatusMeta } from "../dashboard/runStatusMeta";
 
 const STATUS_RANK: Record<RunStatus, number> = {
@@ -27,35 +23,34 @@ const parseNumericParam = (value?: string) => {
   return Number.isNaN(parsed) ? undefined : parsed;
 };
 
+const formatDeadlineLabel = (deadline?: Date) => {
+  if (!deadline || Number.isNaN(deadline.getTime())) {
+    return "Closes soon";
+  }
+  return deadline.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
 function Runs() {
   const navigate = useNavigate();
   const location = useLocation();
   const { runId: runIdParam } = useParams<{ runId?: string }>();
   const routeRunId = parseNumericParam(runIdParam);
-  const [runs, setRuns] = useState<Run[]>([]);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const { enrichedRuns } = useRuns();
+  const { orders } = useOrders();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const isEditingRoute = routeRunId !== undefined;
-
-  const loadRunsAndRestaurants = useCallback(async () => {
-    const [runsResponse, restaurantsResponse] = await Promise.all([
-      fetchRuns(),
-      fetchRestaurants(),
-    ]);
-    setRuns(runsResponse);
-    setRestaurants(restaurantsResponse);
-  }, []);
-
-  const restaurantsMap = useMemo(() => {
-    const map = new Map<number, Restaurant>();
-    restaurants.forEach((restaurant) => {
-      map.set(restaurant.id, restaurant);
-    });
-    return map;
-  }, [restaurants]);
+  const orderedRunIds = useMemo(
+    () => new Set(orders.map((order) => order.foodRun)),
+    [orders],
+  );
 
   const sortedRuns = useMemo(() => {
-    return [...runs].sort((a, b) => {
+    return [...enrichedRuns].sort((a, b) => {
       const scoreA = STATUS_RANK[a.status];
       const scoreB = STATUS_RANK[b.status];
       if (scoreA !== scoreB) {
@@ -65,11 +60,11 @@ function Runs() {
       const timeB = b.deadline ? new Date(b.deadline).getTime() : 0;
       return timeB - timeA;
     });
-  }, [runs]);
+  }, [enrichedRuns]);
 
   const activeRun =
     routeRunId !== undefined
-      ? runs.find((run) => run.id === routeRunId)
+      ? enrichedRuns.find((run) => run.id === routeRunId)
       : undefined;
 
   useEffect(() => {
@@ -90,10 +85,10 @@ function Runs() {
   }, [isEditingRoute, location.state, navigate]);
 
   useEffect(() => {
-    if (routeRunId !== undefined && runs.length > 0 && !activeRun) {
+    if (routeRunId !== undefined && enrichedRuns.length > 0 && !activeRun) {
       navigate("/runs", { replace: true });
     }
-  }, [activeRun, navigate, routeRunId, runs]);
+  }, [activeRun, navigate, routeRunId, enrichedRuns]);
 
   const handleSubmitRun = async (payload: RunFormData) => {
     const createdRun = await createRun({
@@ -106,18 +101,9 @@ function Runs() {
 
     if (!createdRun.id) throw new Error("Created run is missing an id");
 
-    try {
-      await loadRunsAndRestaurants();
-    } catch (error) {
-      console.error("Failed to refresh runs data", error);
-    }
     toast.success("Run created successfully!");
     navigate("/runs");
   };
-
-  useEffect(() => {
-    void loadRunsAndRestaurants();
-  }, [loadRunsAndRestaurants]);
 
   const handleOpenCreatePanel = () => {
     setIsCreateOpen(true);
@@ -139,11 +125,9 @@ function Runs() {
     ? {
         id: activeRun.id,
         name: activeRun.name,
-        restaurantId: activeRun.restaurantId,
-        restaurantLabel:
-          restaurantsMap.get(activeRun.restaurantId)?.name ??
-          "Unknown restaurant",
-        deadline: activeRun.deadline,
+        restaurantId: activeRun.restaurant.id,
+        restaurantLabel: activeRun.restaurant.name,
+        deadline: activeRun.deadline.toISOString().split("T")[0],
       }
     : undefined;
 
@@ -192,32 +176,34 @@ function Runs() {
             <div className="runs-list scrollable">
               {sortedRuns.length > 0 ? (
                 sortedRuns.map((run) => {
-                  const restaurant = restaurantsMap.get(run.restaurantId) ?? {
-                    name: "Unknown restaurant",
-                  };
                   const statusMeta = getStatusMeta(run.status) ?? {
                     label: run.status,
                     tone: "muted" as const,
                   };
+                  const deadlineLabel = formatDeadlineLabel(run.deadline);
+                  const organizerLabel =
+                    run.organizerName?.trim() ||
+                    `Organizer #${run.organizerId}`;
                   return (
                     <button
                       key={run.id}
                       type="button"
-                      className="list-card run-history-card"
+                      className={`list-card run-card ${orderedRunIds.has(run.id) ? "is-ordered" : ""}`}
                       onClick={() => handleOpenEditPanel(run.id)}
                     >
-                      <div className="run-history-card-head">
-                        <div className="run-history-card-title">
-                          <h3>{run.name}</h3>
-                          <p>{restaurant.name}</p>
-                        </div>
+                      <div className="run-card-head">
+                        <h3>{run.name}</h3>
                         <span className={`status-pill ${statusMeta.tone}`}>
                           {statusMeta.label}
                         </span>
                       </div>
-                      <div className="run-history-card-meta">
-                        <span className="muted-label">{run.deliveredAt}</span>
-                        <strong>{run.total}</strong>
+                      <p>{run.restaurant.name}</p>
+                      <div className="run-meta">
+                        {orderedRunIds.has(run.id) && (
+                          <span className="status-pill ordered">Ordered</span>
+                        )}
+                        <span>{organizerLabel}</span>
+                        <span>{deadlineLabel}</span>
                       </div>
                     </button>
                   );

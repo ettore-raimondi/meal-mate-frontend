@@ -12,30 +12,25 @@ export function useOrders(): {
 } {
   const { restaurants } = React.useContext(AppContext);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [enrichedOrders, setEnrichedOrders] = useState<OrderEnriched[]>([]);
 
   const restaurantMap = new Map<number, Restaurant>();
   restaurants.forEach((restaurant) => {
     restaurantMap.set(restaurant.id, restaurant);
   });
 
-  const enrichedOrders = orders.map((order) => {
-    const restaurant = restaurantMap.get(order.restaurantId);
-    if (!restaurant) {
-      console.warn(
-        `Restaurant with ID ${order.restaurantId} not found for order ${order.id}`,
-      );
-      return {
-        ...order,
-        restaurant: {
-          id: order.restaurantId,
-          name: "Unknown Restaurant",
-        },
-        menuItems: [],
-      } as OrderEnriched;
-    }
+  function enrichOrders() {
+    return orders.map((order) => {
+      const restaurant = restaurantMap.get(order.restaurantId);
+      if (!restaurant) {
+        throw new Error(
+          `Restaurant with ID ${order.restaurantId} not found for order ${order.id}`,
+        );
+      }
 
-    return mapToEnrichedOrder(order, restaurant);
-  });
+      return mapToEnrichedOrder(order, restaurant);
+    });
+  }
 
   async function fetchOrders() {
     const orders = await fetchOrdersForUser();
@@ -47,6 +42,14 @@ export function useOrders(): {
       await fetchOrders();
     })();
   }, []);
+
+  useEffect(() => {
+    if (orders.length && restaurants.length) {
+      // Run enrichment whenever orders or restaurants change, but only if we have data for both
+      const enriched = enrichOrders();
+      setEnrichedOrders(enriched);
+    }
+  }, [orders, restaurants]);
 
   return { orders, enrichedOrders };
 }

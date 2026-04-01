@@ -35,6 +35,7 @@ export type Order = {
 
 // This type represents an Order enriched with additional information about the menu items, which can be useful for displaying order details in the UI.
 export type OrderEnriched = Omit<Order, "menuItems"> & {
+  createdAtFormatted: string; // A human-readable formatted date string for display purposes
   restaurant: {
     id: number;
     name: string;

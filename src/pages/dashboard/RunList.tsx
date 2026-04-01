@@ -1,11 +1,10 @@
-import type { Restaurant } from "../../services/restaurant";
-import type { Run } from "../../services/run";
+import type { RunEnriched } from "../../services/run";
 import { RUN_STATUS_META } from "./runStatusMeta";
 
 type RunListProps = {
-  runs: Run[];
-  restaurantMap: Map<number, Restaurant>;
+  runs: RunEnriched[];
   activeRunId: number | null;
+  orderedRunIds: Set<number>;
   onSelect: (runId: number) => void;
 };
 
@@ -21,11 +20,10 @@ const formatDeadlineLabel = (deadline?: Date) => {
   });
 };
 
-function RunList({ runs, restaurantMap, activeRunId, onSelect }: RunListProps) {
+function RunList({ runs, activeRunId, orderedRunIds, onSelect }: RunListProps) {
   return (
     <div className="runs-list scrollable">
       {runs.map((run) => {
-        const runRest = restaurantMap.get(run.restaurantId);
         const statusMeta = RUN_STATUS_META[run.status] ?? {
           label: run.status,
           tone: "muted",
@@ -36,7 +34,7 @@ function RunList({ runs, restaurantMap, activeRunId, onSelect }: RunListProps) {
         return (
           <button
             key={run.id}
-            className={`list-card run-card ${run.id === activeRunId ? "is-active" : ""}`}
+            className={`list-card run-card ${run.id === activeRunId ? "is-active" : ""} ${orderedRunIds.has(run.id) ? "is-ordered" : ""}`}
             onClick={() => onSelect(run.id)}
             type="button"
           >
@@ -46,8 +44,11 @@ function RunList({ runs, restaurantMap, activeRunId, onSelect }: RunListProps) {
                 {statusMeta.label}
               </span>
             </div>
-            <p>{runRest?.name}</p>
+            <p>{run.restaurant.name}</p>
             <div className="run-meta">
+              {orderedRunIds.has(run.id) && (
+                <span className="status-pill ordered">Ordered</span>
+              )}
               <span>{organizerLabel}</span>
               <span>{deadlineLabel}</span>
             </div>

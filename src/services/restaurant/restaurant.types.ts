@@ -27,6 +27,10 @@ export type Restaurant = {
   menuItems: MenuItem[];
 };
 
+export type RestaurantEnriched = Restaurant & {
+  menuItems: MenuItem[];
+};
+
 export type RestaurantFormData = {
   googlePlacesId?: string;
   name: string;

@@ -1,4 +1,5 @@
-import type { Run, RunResponse } from "./run.types";
+import type { Run, RunResponse, RunEnriched } from "./run.types";
+import type { Restaurant } from "../restaurant";
 
 export function mapRunResponseToRuns(runResponse: RunResponse[]): Run[] {
   return runResponse.map((response) => ({
@@ -13,4 +14,25 @@ export function mapRunResponseToRuns(runResponse: RunResponse[]): Run[] {
     createdAt: response.created_at ? new Date(response.created_at) : undefined,
     updatedAt: response.updated_at ? new Date(response.updated_at) : undefined,
   }));
+}
+
+export function mapToEnrichedRun(
+  run: Run,
+  restaurant: Restaurant,
+): RunEnriched {
+  return {
+    id: run.id,
+    name: run.name,
+    deadline: run.deadline,
+    description: run.description,
+    status: run.status,
+    organizerId: run.organizerId,
+    createdAt: run.createdAt,
+    updatedAt: run.updatedAt,
+    organizerName: run.organizerName,
+    restaurant: {
+      id: restaurant.id,
+      name: restaurant.name,
+    },
+  };
 }

@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { formatEuroPrice } from "../../helpers/currency";
 import MenuItemDetail from "./MenuItemDetail";
 import RunDetailView from "./RunDetailView";
 import RunList from "./RunList";
-import { MenuItem, PanelView } from "../../components/homeTypes";
+import type { PanelView } from "../../components/homeTypes";
 import Sidebar from "../../components/Sidebar";
-import { fetchRuns, type Run } from "../../services/run";
-import { fetchRestaurants, type Restaurant } from "../../services/restaurant";
+import { useRuns } from "../../hooks/useRuns";
+import { useOrders } from "../../hooks/useOrders";
+import { AppContext } from "../../context/AppContext";
+import type { Restaurant } from "../../services/restaurant";
 import { getStatusMeta } from "./runStatusMeta";
 import { createOrder } from "../../services/order/order.service";
 import { toast } from "sonner";
@@ -32,10 +34,10 @@ const fromRouteMenuSegment = (segment?: string) => {
 };
 
 function Dashboard() {
-  const [runs, setRuns] = useState<Run[]>([]);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const { restaurants } = useContext(AppContext);
+  const { enrichedRuns } = useRuns();
+  const { orders } = useOrders();
   const [activeRunId, setActiveRunId] = useState<number | null>(null);
-  const [hasLoadedRuns, setHasLoadedRuns] = useState(false);
   const [activeItemId, setActiveItemId] = useState<number | null>(null);
   const [orderedItemIds, setOrderedItemIds] = useState<Set<number>>(new Set());
   const [orderNote, setOrderNote] = useState("");
@@ -56,15 +58,16 @@ function Dashboard() {
     return map;
   }, [restaurants]);
 
-  const activeRun = useMemo(
+  const activeEnrichedRun = useMemo(
     () =>
       effectiveRunId === undefined
         ? undefined
-        : runs.find((run) => run.id === effectiveRunId),
-    [effectiveRunId, runs],
+        : enrichedRuns.find((run) => run.id === effectiveRunId),
+    [effectiveRunId, enrichedRuns],
   );
-  const runRestaurant = activeRun
-    ? restaurantMap.get(activeRun.restaurantId)
+
+  const runRestaurant = activeEnrichedRun
+    ? restaurantMap.get(activeEnrichedRun.restaurant.id)
     : undefined;
   const menuItems = runRestaurant?.menuItems ?? [];
   const effectiveMenuItemId = routeMenuItemId ?? activeItemId ?? undefined;
@@ -94,7 +97,7 @@ function Dashboard() {
   };
 
   const openMenuDetail = (itemId: number) => {
-    const targetRunId = routeRunId ?? activeRunId ?? runs[0]?.id;
+    const targetRunId = routeRunId ?? activeRunId ?? enrichedRuns[0]?.id;
     if (targetRunId === undefined || targetRunId === null) {
       return;
     }
@@ -137,8 +140,8 @@ function Dashboard() {
   };
 
   const panelTitle = (() => {
-    if (panelView === "runDetail" && activeRun) {
-      return activeRun.name;
+    if (panelView === "runDetail" && activeEnrichedRun) {
+      return activeEnrichedRun.name;
     }
     if (panelView === "menuDetail" && activeMenuItem) {
       return activeMenuItem.name;
@@ -150,10 +153,10 @@ function Dashboard() {
     if (panelView === "runDetail") {
       const parts = [];
       if (runRestaurant) parts.push(runRestaurant.name);
-      if (activeRun) {
+      if (activeEnrichedRun) {
         const organizerLabel =
-          activeRun.organizerName?.trim() ||
-          `Organizer #${activeRun.organizerId}`;
+          activeEnrichedRun.organizerName?.trim() ||
+          `Organizer #${activeEnrichedRun.organizerId}`;
         parts.push(organizerLabel);
       }
       return parts.length > 0 ? parts.join(" · ") : "Review the selected run";
@@ -168,7 +171,11 @@ function Dashboard() {
     return "Track active runs and place orders.";
   })();
 
-  const activeStatusMeta = getStatusMeta(activeRun?.status);
+  const activeStatusMeta = getStatusMeta(activeEnrichedRun?.status);
+  const orderedRunIds = useMemo(
+    () => new Set(orders.map((order) => order.foodRun)),
+    [orders],
+  );
 
   const backButton = (() => {
     if (panelView === "runDetail") {
@@ -181,28 +188,27 @@ function Dashboard() {
   })();
 
   useEffect(() => {
-    if (routeRunId === undefined || !hasLoadedRuns) {
+    if (routeRunId === undefined || enrichedRuns.length === 0) {
       return;
     }
-    const runExists = runs.some((run) => run.id === routeRunId);
+    const runExists = enrichedRuns.some((run) => run.id === routeRunId);
     if (runExists && activeRunId !== routeRunId) {
       setActiveRunId(routeRunId);
     } else if (!runExists) {
       navigate("/dashboard", { replace: true });
     }
-  }, [routeRunId, activeRunId, navigate, runs, hasLoadedRuns]);
+  }, [routeRunId, activeRunId, navigate, enrichedRuns]);
 
   useEffect(() => {
     if (
-      !hasLoadedRuns ||
       routeRunId !== undefined ||
       activeRunId !== null ||
-      runs.length === 0
+      enrichedRuns.length === 0
     ) {
       return;
     }
-    setActiveRunId(runs[0].id);
-  }, [routeRunId, activeRunId, runs, hasLoadedRuns]);
+    setActiveRunId(enrichedRuns[0].id);
+  }, [routeRunId, activeRunId, enrichedRuns]);
 
   useEffect(() => {
     if (menuItems.length === 0) {
@@ -238,25 +244,6 @@ function Dashboard() {
       setActiveItemId(menuItems[0].id);
     }
   }, [menuItems, routeMenuItemId, routeRunId, navigate, activeItemId]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [runsResponse, restaurantsResponse] = await Promise.all([
-          fetchRuns(),
-          fetchRestaurants(),
-        ]);
-
-        setRuns(runsResponse);
-        setRestaurants(restaurantsResponse);
-      } catch (error) {
-        console.error("Failed to load dashboard data", error);
-      } finally {
-        setHasLoadedRuns(true);
-      }
-    };
-    fetchData();
-  }, []);
 
   return (
     <div className="dashboard">
@@ -303,9 +290,9 @@ function Dashboard() {
           <div className="runs-grid">
             {panelView === "runs" && (
               <RunList
-                runs={runs}
-                restaurantMap={restaurantMap}
+                runs={enrichedRuns}
                 activeRunId={effectiveRunId ?? null}
+                orderedRunIds={orderedRunIds}
                 onSelect={handleRunSelect}
               />
             )}
@@ -334,7 +321,7 @@ function Dashboard() {
                 ) : (
                   <RunDetailView
                     menuItems={menuItems}
-                    activeRunId={activeRun?.id}
+                    activeRunId={activeEnrichedRun?.id}
                     activeItemId={effectiveMenuItemId ?? null}
                     orderedItemIds={orderedItemIds}
                     onSelectMenuItem={openMenuDetail}
@@ -342,6 +329,7 @@ function Dashboard() {
                     onPlaceOrder={handlePlaceOrder}
                     orderNote={orderNote}
                     onOrderNoteChange={setOrderNote}
+                    onOrderedItemsChange={setOrderedItemIds}
                   />
                 )}
               </div>

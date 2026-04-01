@@ -49,7 +49,7 @@ function OrderDetail() {
                 </div>
                 <p className="panel-subtitle">
                   {order
-                    ? `${order.menuItems.length} · ${order.createdAt}`
+                    ? `${order.menuItems.length} items · ${order.createdAtFormatted}`
                     : "We couldn't find that order. Return to your history."}
                 </p>
               </div>
@@ -66,9 +66,7 @@ function OrderDetail() {
                       <h3>{order.id}</h3>
                     </div>
                     <div className="order-detail-meta-total">
-                      <span className="muted-label">
-                        {order.createdAt.toDateString()}
-                      </span>
+                      <span className="muted-label">Total:</span>
                       <strong>{order.total}</strong>
                     </div>
                   </div>

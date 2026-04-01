@@ -33,3 +33,18 @@ export async function fetchOrdersForUser(): Promise<Order[]> {
 
   return ordersDTO.map(mapToOrder);
 }
+
+export async function fetchLatestOrderForRun(
+  foodRunId: number,
+): Promise<Order | null> {
+  const ordersDTO = await httpClient("orders/latest/:foodRunId/", {
+    method: "GET",
+    urlParams: { foodRunId: foodRunId.toString() },
+  });
+
+  if (!ordersDTO) {
+    return null; // No order found for this run
+  }
+
+  return mapToOrder(ordersDTO);
+}

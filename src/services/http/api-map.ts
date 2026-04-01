@@ -197,4 +197,14 @@ export type ApiEndpoints = {
       params: never;
     };
   };
+  "orders/latest/:foodRunId/": {
+    GET: {
+      response: OrderResponse | null;
+      body: never;
+      params: never;
+      urlParams: {
+        foodRunId: string;
+      };
+    };
+  };
 };
