@@ -7,6 +7,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import Landing from "./pages/Landing";
 import Restaurants from "./pages/restaurants/Restaurants";
 import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
 import Runs from "./pages/run/Runs";
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
         <Route path="/runs" element={<Runs />} />
         <Route path="/runs/:runId" element={<Runs />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/orders/:orderId" element={<OrderDetail />} />
         <Route path="/restaurants" element={<Restaurants />} />
         <Route
           path="/restaurants/:restaurantNumber"

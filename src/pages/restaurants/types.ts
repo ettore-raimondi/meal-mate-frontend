@@ -15,7 +15,7 @@ export type MenuDraftState = {
   description: string;
 };
 
-export type MenuDraftMode = { type: "add" } | { type: "edit"; itemId: string };
+export type MenuDraftMode = { type: "add" } | { type: "edit"; itemId: number };
 
 export const emptyRestaurantForm: RestaurantFormState = {
   name: "",
@@ -32,5 +32,5 @@ export const emptyMenuDraft: MenuDraftState = {
   description: "",
 };
 
-export type RestaurantSelectionHandler = (restaurantId: string) => void;
+export type RestaurantSelectionHandler = (restaurantId: number) => void;
 export type MenuItemSelectionHandler = (menuItem: MenuItem) => void;

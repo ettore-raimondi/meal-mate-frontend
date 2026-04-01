@@ -7,7 +7,6 @@ const toCreatePayload = ({ clientState, id, ...rest }: MenuItem) => rest;
 
 const toUpdatePayload = ({ clientState, imageUrl, ...item }: MenuItem) => ({
   ...item,
-  id: Number(item.id),
   image_url: imageUrl,
 });
 
@@ -22,32 +21,32 @@ export async function scrapeMenuItems(websiteUrl: string): Promise<MenuItem[]> {
 }
 
 export async function getMenuItemsForRestaurant(
-  restaurantId: string,
+  restaurantId: number,
 ): Promise<MenuItem[]> {
   return httpClient(`menu_items/restaurant/:restaurantId/`, {
     method: "GET",
     urlParams: {
-      restaurantId,
+      restaurantId: restaurantId.toString(),
     },
   });
 }
 
 export async function saveMenuItems(
-  restaurantId: string,
+  restaurantId: number,
   menuItems: MenuItem[],
 ) {
   const menuItemsDTO = await httpClient("menu_items/bulk_create/", {
     method: "POST",
     body: {
       menu_items: menuItems.map(toCreatePayload),
-      restaurant_id: restaurantId,
+      restaurant_id: restaurantId.toString(),
     },
   });
   return mapToMenuItems(menuItemsDTO);
 }
 
 export async function updateMenuItems(
-  restaurantId: string,
+  restaurantId: number,
   menuItems: MenuItem[],
 ) {
   if (menuItems.length === 0) {
@@ -70,7 +69,7 @@ export async function updateMenuItems(
           method: "POST",
           body: {
             menu_items: itemsToCreate.map(toCreatePayload),
-            restaurant_id: restaurantId,
+            restaurant_id: restaurantId.toString(),
           },
         })
       : Promise.resolve([] as MenuItemResponse[]),
@@ -79,7 +78,7 @@ export async function updateMenuItems(
           method: "PATCH",
           body: {
             menu_items: itemsToUpdate.map(toUpdatePayload),
-            restaurant_id: restaurantId,
+            restaurant_id: restaurantId.toString(),
           },
         })
       : Promise.resolve([] as MenuItemResponse[]),
@@ -92,11 +91,11 @@ export async function updateMenuItems(
   ];
 }
 
-export function deleteMenuItem(itemId: string) {
+export function deleteMenuItem(itemId: number) {
   return httpClient(`menu_items/:id/`, {
     method: "DELETE",
     urlParams: {
-      id: itemId,
+      id: itemId.toString(),
     },
   });
 }

@@ -551,6 +551,32 @@ a:hover {
   gap: 0.85rem;
 }
 
+.order-detail-section {
+  gap: 1.5rem;
+}
+
+.order-detail-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.order-detail-meta h3 {
+  margin: 0.15rem 0 0;
+  font-size: 1.1rem;
+  color: #1f1d2b;
+}
+
+.order-detail-meta-total {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: flex-end;
+}
+
 .order-card-head {
   display: flex;
   justify-content: space-between;
@@ -579,6 +605,18 @@ a:hover {
 
 .order-card-meta strong {
   font-size: 1rem;
+}
+
+.order-detail-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.order-detail-fields strong {
+  font-size: 0.95rem;
+  color: #1f1d2b;
 }
 
 .run-history-card {

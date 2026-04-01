@@ -60,28 +60,28 @@ export async function fetchRestaurants() {
   return mapToRestaurants(restaurantDTOs);
 }
 
-export async function deleteRestaurant(restaurantId: string) {
+export async function deleteRestaurant(restaurantId: number) {
   await httpClient(`restaurants/:id/`, {
     method: "DELETE",
-    urlParams: { id: restaurantId },
+    urlParams: { id: restaurantId.toString() },
   });
 }
 
-export async function fetchRestaurantById(restaurantId: string) {
+export async function fetchRestaurantById(restaurantId: number) {
   const restaurantDTO = await httpClient(`restaurants/:id/`, {
     method: "GET",
-    urlParams: { id: restaurantId },
+    urlParams: { id: restaurantId.toString() },
   });
   return mapToRestaurants([restaurantDTO])[0];
 }
 
 export async function updateRestaurant(
-  restaurantId: string,
+  restaurantId: number,
   updatedData: Partial<RestaurantFormData>,
 ) {
   const restaurantDTO = await httpClient(`restaurants/:id/`, {
     method: "PATCH",
-    urlParams: { id: restaurantId },
+    urlParams: { id: restaurantId.toString() },
     body: {
       name: updatedData.name,
       address: updatedData.address,

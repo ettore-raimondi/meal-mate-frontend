@@ -1,7 +1,7 @@
 export type MenuItemClientState = "new" | "toUpdate";
 
 export type MenuItem = {
-  id: string;
+  id: number;
   name: string;
   price: string;
   description: string;

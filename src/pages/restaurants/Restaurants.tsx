@@ -17,7 +17,6 @@ import {
   updateRestaurant,
 } from "../../services/restaurant/restaurant.service";
 import { fetchCoordinates } from "../../helpers/get-coordinates";
-import { type RestaurantFormData } from "../../services/restaurant/types";
 import {
   deleteMenuItem,
   getMenuItemsForRestaurant,
@@ -39,8 +38,10 @@ import {
   useRestaurantCollections,
   useRestaurantSelection,
 } from "./hooks";
+import type { RestaurantFormData } from "../../services/restaurant";
 
-const MENU_PREFIX = "m-";
+let nextTempMenuItemId = -1;
+const generateMenuItemTempId = () => nextTempMenuItemId--;
 
 const toRestaurantFormState = (
   restaurant?: Partial<Restaurant> | null,
@@ -168,7 +169,7 @@ function Restaurants() {
         : `${activeRestaurant.address} · ${activeRestaurant.cuisine}`
       : "Browse all partner kitchens.";
 
-  const handleSelectRestaurant = async (restaurantId: string) => {
+  const handleSelectRestaurant = async (restaurantId: number) => {
     try {
       const menuItems = await getMenuItemsForRestaurant(restaurantId);
       updateRestaurantInCollection("owned", restaurantId, (restaurant) => ({
@@ -183,7 +184,7 @@ function Restaurants() {
     }
   };
 
-  const handleSelectNearbyRestaurant = (restaurantId: string) => {
+  const handleSelectNearbyRestaurant = (restaurantId: number) => {
     navigate(`/restaurants/${restaurantId}`);
   };
 
@@ -237,7 +238,7 @@ function Restaurants() {
     await handleDeleteRestaurant(activeRestaurant.id);
   };
 
-  const handleDeleteRestaurant = async (restaurantId: string) => {
+  const handleDeleteRestaurant = async (restaurantId: number) => {
     const source: RestaurantCollection =
       activeRestaurantSource ??
       (restaurantsNearMe.some((restaurant) => restaurant.id === restaurantId)
@@ -333,7 +334,7 @@ function Restaurants() {
     }
 
     const newItem: MenuItem = {
-      id: `${MENU_PREFIX}${Date.now()}`,
+      id: generateMenuItemTempId(),
       name: menuEditor.name,
       price: menuEditor.price,
       description: menuEditor.description,
@@ -344,7 +345,7 @@ function Restaurants() {
     cancelMenuEditor();
   };
 
-  const handleDeleteMenuItem = async (itemId: string) => {
+  const handleDeleteMenuItem = async (itemId: number) => {
     const sourceMenu = isCreatingRestaurant
       ? newRestaurantMenu
       : (activeRestaurant?.menu ?? []);
@@ -364,7 +365,9 @@ function Restaurants() {
       return;
     }
 
-    await deleteMenuItem(itemId);
+    if (itemId > 0) {
+      await deleteMenuItem(itemId);
+    }
 
     updateMenuItems((prevMenu) =>
       prevMenu.filter((item) => item.id !== itemId),

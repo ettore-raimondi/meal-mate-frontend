@@ -5,6 +5,7 @@ import type {
   UpdateMenuItemPayload,
 } from "../menu-item";
 import type { RestaurantDTO } from "../restaurant";
+import type { CreateRunPayload, RunResponse, RunStatus } from "../run/run.api";
 
 /**
  * This type defines the structure of the API endpoints used in the application.
@@ -158,6 +159,25 @@ export type ApiEndpoints = {
         menu_items: UpdateMenuItemPayload[];
         restaurant_id: string;
       };
+      params: never;
+    };
+  };
+  "food_runs/": {
+    POST: {
+      response: RunResponse;
+      body: {
+        name: string;
+        description?: string;
+        restaurant: string;
+        organizer: number;
+        deadline: string;
+        status: RunStatus;
+      };
+      params: never;
+    };
+    GET: {
+      response: RunResponse[];
+      body: never;
       params: never;
     };
   };

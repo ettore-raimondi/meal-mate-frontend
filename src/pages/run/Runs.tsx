@@ -1,17 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
-import { RunStatus, type UserRun, userRunsSeed } from "../../data/userRuns";
 import { CreateRunPanel, type RunFormData } from ".";
-
-const STATUS_CONFIG: Record<RunStatus, { label: string; tone: string }> = {
-  "in-progress": { label: "In progress", tone: "progress" },
-  completed: { label: "Completed", tone: "success" },
-};
+import {
+  createRun,
+  fetchRuns,
+  type Run,
+  type RunStatus,
+} from "../../services/run";
+import { toast } from "sonner";
+import { fetchRestaurants, type Restaurant } from "../../services/restaurant";
+import { getStatusMeta } from "../dashboard/runStatusMeta";
 
 const STATUS_RANK: Record<RunStatus, number> = {
-  "in-progress": 0,
-  completed: 1,
+  IN_PROGRESS: 0,
+  OPEN: 1,
+  CLOSED: 3,
+  COMPLETED: 4,
 };
 
 const formatDeadlineLabel = (deadline: string) => {
@@ -30,12 +35,31 @@ const formatDeadlineLabel = (deadline: string) => {
   return `Closes ${dateLabel} · ${timeLabel}`;
 };
 
+const parseNumericParam = (value?: string) => {
+  if (value === undefined) {
+    return undefined;
+  }
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
 function Runs() {
   const navigate = useNavigate();
-  const { runId } = useParams<{ runId?: string }>();
-  const [runs, setRuns] = useState<UserRun[]>(userRunsSeed);
+  const location = useLocation();
+  const { runId: runIdParam } = useParams<{ runId?: string }>();
+  const routeRunId = parseNumericParam(runIdParam);
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const isEditingRoute = Boolean(runId);
+  const isEditingRoute = routeRunId !== undefined;
+
+  const restaurantsMap = useMemo(() => {
+    const map = new Map<number, Restaurant>();
+    restaurants.forEach((restaurant) => {
+      map.set(restaurant.id, restaurant);
+    });
+    return map;
+  }, [restaurants]);
 
   const sortedRuns = useMemo(() => {
     return [...runs].sort((a, b) => {
@@ -50,9 +74,10 @@ function Runs() {
     });
   }, [runs]);
 
-  const activeRun = isEditingRoute
-    ? runs.find((run) => run.id === runId)
-    : undefined;
+  const activeRun =
+    routeRunId !== undefined
+      ? runs.find((run) => run.id === routeRunId)
+      : undefined;
 
   useEffect(() => {
     if (isEditingRoute) {
@@ -61,53 +86,61 @@ function Runs() {
   }, [isEditingRoute]);
 
   useEffect(() => {
-    if (runId && runs.length > 0 && !activeRun) {
+    if (isEditingRoute) {
+      return;
+    }
+    const state = location.state as { openCreate?: boolean } | null;
+    if (state?.openCreate) {
+      setIsCreateOpen(true);
+      navigate("/runs", { replace: true, state: {} });
+    }
+  }, [isEditingRoute, location.state, navigate]);
+
+  useEffect(() => {
+    if (routeRunId !== undefined && runs.length > 0 && !activeRun) {
       navigate("/runs", { replace: true });
     }
-  }, [activeRun, navigate, runId, runs]);
+  }, [activeRun, navigate, routeRunId, runs]);
 
   const handleSubmitRun = async (payload: RunFormData) => {
-    if (payload.id) {
-      setRuns((previous) =>
-        previous.map((run) => {
-          if (run.id !== payload.id) {
-            return run;
-          }
-          return {
-            ...run,
-            name: payload.name,
-            restaurant: payload.restaurantName,
-            restaurantId: payload.restaurantId,
-            deadline: payload.deadline,
-            deliveredAt: formatDeadlineLabel(payload.deadline),
-          };
-        }),
-      );
+    const createdRun = await createRun({
+      name: payload.name,
+      description: "",
+      restaurant_id: payload.restaurantId,
+      deadline: payload.deadline,
+      status: "OPEN",
+    });
+
+    if (createdRun.id) {
+      try {
+        const updatedRestaurants = await fetchRestaurants();
+        setRestaurants(updatedRestaurants);
+      } catch (error) {
+        console.error("Failed to refresh restaurants", error);
+      }
+      toast.success("Run created successfully!");
       navigate("/runs");
       return;
     }
-
-    setRuns((previous) => [
-      {
-        id: `run-${Date.now()}`,
-        name: payload.name,
-        restaurant: payload.restaurantName,
-        restaurantId: payload.restaurantId,
-        total: "€0.00",
-        deliveredAt: formatDeadlineLabel(payload.deadline),
-        deadline: payload.deadline,
-        status: "in-progress",
-      },
-      ...previous,
-    ]);
     setIsCreateOpen(false);
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const runs = await fetchRuns();
+      const restaurants = await fetchRestaurants();
+
+      setRestaurants(restaurants);
+      setRuns(runs);
+    };
+    fetchData();
+  }, []);
 
   const handleOpenCreatePanel = () => {
     setIsCreateOpen(true);
   };
 
-  const handleOpenEditPanel = (runId: string) => {
+  const handleOpenEditPanel = (runId: number) => {
     navigate(`/runs/${runId}`);
   };
 
@@ -124,7 +157,9 @@ function Runs() {
         id: activeRun.id,
         name: activeRun.name,
         restaurantId: activeRun.restaurantId,
-        restaurantLabel: activeRun.restaurant,
+        restaurantLabel:
+          restaurantsMap.get(activeRun.restaurantId)?.name ??
+          "Unknown restaurant",
         deadline: activeRun.deadline,
       }
     : undefined;
@@ -174,7 +209,13 @@ function Runs() {
             <div className="runs-list scrollable">
               {sortedRuns.length > 0 ? (
                 sortedRuns.map((run) => {
-                  const statusMeta = STATUS_CONFIG[run.status];
+                  const restaurant = restaurantsMap.get(run.restaurantId) ?? {
+                    name: "Unknown restaurant",
+                  };
+                  const statusMeta = getStatusMeta(run.status) ?? {
+                    label: run.status,
+                    tone: "muted" as const,
+                  };
                   return (
                     <button
                       key={run.id}
@@ -185,7 +226,7 @@ function Runs() {
                       <div className="run-history-card-head">
                         <div className="run-history-card-title">
                           <h3>{run.name}</h3>
-                          <p>{run.restaurant}</p>
+                          <p>{restaurant.name}</p>
                         </div>
                         <span className={`status-pill ${statusMeta.tone}`}>
                           {statusMeta.label}

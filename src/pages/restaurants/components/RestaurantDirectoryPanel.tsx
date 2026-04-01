@@ -4,8 +4,8 @@ import RestaurantList from "../RestaurantList";
 type RestaurantDirectoryPanelProps = {
   owned: Restaurant[];
   nearby: Restaurant[];
-  onSelectOwned: (restaurantId: string) => void;
-  onSelectNearby: (restaurantId: string) => void;
+  onSelectOwned: (restaurantId: number) => void;
+  onSelectNearby: (restaurantId: number) => void;
 };
 
 function RestaurantDirectoryPanel({

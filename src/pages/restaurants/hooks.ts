@@ -19,13 +19,17 @@ export function useRestaurantSelection(
   const viewingDetail = Boolean(restaurantNumber);
   const restaurantRouteId =
     viewingDetail && !isCreatingRestaurant ? restaurantNumber : undefined;
+  const restaurantRouteNumericId =
+    restaurantRouteId !== undefined && !Number.isNaN(Number(restaurantRouteId))
+      ? Number(restaurantRouteId)
+      : undefined;
 
   const selection = useMemo(() => {
-    if (!restaurantRouteId) {
+    if (restaurantRouteNumericId === undefined) {
       return { activeRestaurant: undefined, activeRestaurantSource: null };
     }
     const ownedMatch = restaurants.find(
-      (restaurant) => restaurant.id === restaurantRouteId,
+      (restaurant) => restaurant.id === restaurantRouteNumericId,
     );
     if (ownedMatch) {
       return {
@@ -34,7 +38,7 @@ export function useRestaurantSelection(
       };
     }
     const nearbyMatch = restaurantsNearMe.find(
-      (restaurant) => restaurant.id === restaurantRouteId,
+      (restaurant) => restaurant.id === restaurantRouteNumericId,
     );
     if (nearbyMatch) {
       return {
@@ -43,7 +47,7 @@ export function useRestaurantSelection(
       };
     }
     return { activeRestaurant: undefined, activeRestaurantSource: null };
-  }, [restaurantRouteId, restaurants, restaurantsNearMe]);
+  }, [restaurantRouteNumericId, restaurants, restaurantsNearMe]);
 
   return {
     isCreatingRestaurant,
@@ -86,7 +90,7 @@ export function useRestaurantCollections(
   const updateRestaurantInCollection = useCallback(
     (
       collection: RestaurantCollection,
-      restaurantId: string,
+      restaurantId: number,
       updater: (restaurant: Restaurant) => Restaurant,
     ) => {
       mutate(collection, (list) =>
@@ -99,7 +103,7 @@ export function useRestaurantCollections(
   );
 
   const removeRestaurantFromCollection = useCallback(
-    (collection: RestaurantCollection, restaurantId: string) => {
+    (collection: RestaurantCollection, restaurantId: number) => {
       mutate(collection, (list) =>
         list.filter((restaurant) => restaurant.id !== restaurantId),
       );

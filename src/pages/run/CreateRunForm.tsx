@@ -18,7 +18,7 @@ type CreateRunFormProps = {
 
 const INITIAL_FORM_STATE: RunFormValues = {
   name: "",
-  restaurantId: "",
+  restaurantId: 0,
   deadline: "",
 };
 
@@ -75,12 +75,14 @@ function CreateRunForm({
     setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
-  const handleChange = (field: FormFieldKey, value: string) => {
+  const handleChange = (field: FormFieldKey, value: string | number) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
-  const findRestaurantName = (restaurantId: string) => {
-    const match = restaurants.find((restaurant) => restaurant.id === restaurantId);
+  const findRestaurantName = (restaurantId: number) => {
+    const match = restaurants.find(
+      (restaurant) => restaurant.id === restaurantId,
+    );
     if (match) {
       return match.label;
     }
@@ -127,11 +129,12 @@ function CreateRunForm({
 
   const hasFallbackRestaurant = Boolean(
     initialValues?.restaurantId &&
-      formState.restaurantId === initialValues.restaurantId &&
-      !restaurants.some((restaurant) => restaurant.id === formState.restaurantId),
+    formState.restaurantId === initialValues.restaurantId &&
+    !restaurants.some((restaurant) => restaurant.id === formState.restaurantId),
   );
   const selectDisabled =
-    isLoadingRestaurants || (!hasFallbackRestaurant && restaurants.length === 0);
+    isLoadingRestaurants ||
+    (!hasFallbackRestaurant && restaurants.length === 0);
   const submitDisabled = !isValid || isSubmitting || selectDisabled;
   const submitLabel = mode === "create" ? "Create run" : "Save changes";
   const submittingLabel = mode === "create" ? "Creating..." : "Saving...";
@@ -170,12 +173,16 @@ function CreateRunForm({
           id="run-restaurant"
           name="restaurant"
           value={formState.restaurantId}
-          onChange={(event) => handleChange("restaurantId", event.target.value)}
+          onChange={(event) =>
+            handleChange("restaurantId", Number(event.target.value))
+          }
           onBlur={() => handleBlur("restaurantId")}
           disabled={selectDisabled}
         >
           <option value="" disabled>
-            {isLoadingRestaurants ? "Loading your restaurants..." : "Select a restaurant"}
+            {isLoadingRestaurants
+              ? "Loading your restaurants..."
+              : "Select a restaurant"}
           </option>
           {hasFallbackRestaurant && initialValues ? (
             <option value={initialValues.restaurantId}>

@@ -1,13 +1,15 @@
 import { formatEuroPrice } from "../../helpers/currency";
 import type { MenuItem } from "../../components/homeTypes";
+import OrderSummaryCard from "../../components/orders/OrderSummaryCard";
+import type { OrderSummaryItem } from "../../components/orders/OrderSummaryCard";
 
 type RunDetailViewProps = {
   menuItems: MenuItem[];
-  activeRunId?: string;
-  activeItemId: string | null;
-  orderedItemIds: Set<string>;
-  onSelectMenuItem: (itemId: string) => void;
-  onToggleOrder: (itemId: string) => void;
+  activeRunId?: number;
+  activeItemId: number | null;
+  orderedItemIds: Set<number>;
+  onSelectMenuItem: (itemId: number) => void;
+  onToggleOrder: (itemId: number) => void;
   onPlaceOrder: () => void;
 };
 
@@ -21,10 +23,11 @@ function RunDetailView({
   onPlaceOrder,
 }: RunDetailViewProps) {
   const orderedItems = menuItems.filter((item) => orderedItemIds.has(item.id));
-  const orderTotal = orderedItems.reduce(
-    (sum, item) => sum + parseFloat(item.price),
-    0,
-  );
+  const orderSummaryItems: OrderSummaryItem[] = orderedItems.map((item) => ({
+    id: item.id,
+    name: item.name,
+    price: item.price,
+  }));
   return (
     <section className="menu-section">
       <div className="menu-section-head">
@@ -82,34 +85,11 @@ function RunDetailView({
         )}
       </div>
 
-      <div className="order-summary">
-        <h4>Your order</h4>
-        {orderedItems.length > 0 ? (
-          <>
-            <ul className="order-summary-list">
-              {orderedItems.map((item) => (
-                <li key={item.id} className="order-summary-row">
-                  <span>{item.name}</span>
-                  <span>{formatEuroPrice(item.price)}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="order-summary-total">
-              <span>Total</span>
-              <span>{formatEuroPrice(orderTotal.toFixed(2))}</span>
-            </div>
-            <button
-              className="order-summary-place-btn"
-              type="button"
-              onClick={onPlaceOrder}
-            >
-              Place order →
-            </button>
-          </>
-        ) : (
-          <p className="muted-label">No items added yet.</p>
-        )}
-      </div>
+      <OrderSummaryCard
+        items={orderSummaryItems}
+        emptyMessage="No items added yet."
+        action={{ label: "Place order →", onClick: onPlaceOrder }}
+      />
     </section>
   );
 }

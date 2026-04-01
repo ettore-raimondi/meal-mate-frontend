@@ -1,23 +1,23 @@
 export type RunFormData = {
-  id?: string;
+  id?: number;
   name: string;
-  restaurantId: string;
+  restaurantId: number;
   restaurantName: string;
   deadline: string;
 };
 
 export type RunFormValues = {
   name: string;
-  restaurantId: string;
+  restaurantId: number;
   deadline: string;
 };
 
 export type RunInitialValues = RunFormValues & {
-  id?: string;
+  id?: number;
   restaurantLabel?: string;
 };
 
 export type RestaurantOption = {
-  id: string;
+  id: number;
   label: string;
 };

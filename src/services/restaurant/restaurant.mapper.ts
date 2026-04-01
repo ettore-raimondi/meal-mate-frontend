@@ -1,8 +1,9 @@
 import type { RestaurantDTO } from ".";
+import { mapToMenuItems } from "../menu-item/menu-item.mapper";
 
 export function mapToRestaurants(restaurants: RestaurantDTO[]) {
   return restaurants.map((restaurant) => ({
-    id: String(restaurant.id),
+    id: restaurant.id,
     googlePlacesId: restaurant.google_places_id,
     createdAt: restaurant.created_at,
     deletedAt: restaurant.deleted_at,
@@ -12,6 +13,6 @@ export function mapToRestaurants(restaurants: RestaurantDTO[]) {
     websiteUrl: restaurant.website_url,
     description: restaurant.description,
     cuisine: restaurant.cuisine,
-    menu: restaurant.menu || [],
+    menuItems: mapToMenuItems(restaurant.menu_items || []),
   }));
 }

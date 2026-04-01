@@ -4,129 +4,38 @@ import { formatEuroPrice } from "../../helpers/currency";
 import MenuItemDetail from "./MenuItemDetail";
 import RunDetailView from "./RunDetailView";
 import RunList from "./RunList";
-import {
-  FoodRun,
-  MenuItem,
-  PanelView,
-  Restaurant,
-} from "../../components/homeTypes";
+import { MenuItem, PanelView } from "../../components/homeTypes";
 import Sidebar from "../../components/Sidebar";
+import { fetchRuns, type Run } from "../../services/run";
+import { fetchRestaurants, type Restaurant } from "../../services/restaurant";
+import { getStatusMeta } from "./runStatusMeta";
 
-const restaurants: Restaurant[] = [
-  {
-    id: "rest-1",
-    name: "Lotus Bowl",
-    address: "12 Garden Lane",
-    phoneNumber: "+353 1 234 5678",
-    websiteUrl: "",
-    description: "Fresh Asian-inspired bowls.",
-    cuisine: "Asian Fusion",
-    menu: [
-      {
-        id: "m-1",
-        name: "Spicy Basil Pad Thai",
-        price: "14.50",
-        description:
-          "Rice noodles, tofu, peanuts, and a rich basil-chilli sauce.",
-      },
-      {
-        id: "m-2",
-        name: "Green Mango Salad",
-        price: "10.00",
-        description:
-          "Shredded green mango with lime dressing and toasted sesame.",
-      },
-      {
-        id: "m-3",
-        name: "Miso Glazed Aubergine",
-        price: "12.00",
-        description:
-          "Charred aubergine halves with white miso and spring onion.",
-      },
-    ],
-  },
-  {
-    id: "rest-2",
-    name: "Ridgeway Sandwich",
-    address: "5 Market Street",
-    phoneNumber: "+353 1 987 6543",
-    websiteUrl: "",
-    description: "Handcrafted sandwiches and cold brew.",
-    cuisine: "Deli",
-    menu: [
-      {
-        id: "m-4",
-        name: "Turkey Club",
-        price: "11.50",
-        description: "Smoked turkey, bacon, lettuce, tomato on sourdough.",
-      },
-      {
-        id: "m-5",
-        name: "Cold Brew",
-        price: "4.00",
-        description: "24-hour cold-steeped single origin, served over ice.",
-      },
-    ],
-  },
-];
-
-const runs: FoodRun[] = [
-  {
-    id: "run-248",
-    name: "Design Sync Lunch",
-    restaurantId: "rest-1",
-    organizer: "Ava Patel",
-    cutoff: "Today · 12:30 PM",
-    status: "Open",
-    orders: 8,
-    eta: "ETA 1:10 PM",
-  },
-  {
-    id: "run-249",
-    name: "Sales Push Fuel",
-    restaurantId: "rest-2",
-    organizer: "Alex Kim",
-    cutoff: "Today · 1:00 PM",
-    status: "Open",
-    orders: 5,
-    eta: "ETA 1:45 PM",
-  },
-  {
-    id: "run-250",
-    name: "Night Ops",
-    restaurantId: "rest-3",
-    organizer: "Mia Lopez",
-    cutoff: "Tomorrow · 10:00 AM",
-    status: "Draft",
-    orders: 0,
-    eta: "ETA 12:15 PM",
-  },
-];
-
-const RUN_PREFIX = "run-";
-const MENU_PREFIX = "m-";
-
-const toRouteRunSegment = (id: string) => id.replace(/^run-/i, "");
-const toRouteMenuSegment = (id: string) => id.replace(/^m-/i, "");
+const toRouteRunSegment = (id: number) => encodeURIComponent(String(id));
+const toRouteMenuSegment = (id: number) => encodeURIComponent(String(id));
 
 const fromRouteRunSegment = (segment?: string) => {
   if (!segment) {
     return undefined;
   }
-  return segment.startsWith(RUN_PREFIX) ? segment : `${RUN_PREFIX}${segment}`;
+  const parsed = Number(decodeURIComponent(segment));
+  return Number.isNaN(parsed) ? undefined : parsed;
 };
 
 const fromRouteMenuSegment = (segment?: string) => {
   if (!segment) {
     return undefined;
   }
-  return segment.startsWith(MENU_PREFIX) ? segment : `${MENU_PREFIX}${segment}`;
+  const parsed = Number(decodeURIComponent(segment));
+  return Number.isNaN(parsed) ? undefined : parsed;
 };
 
 function Dashboard() {
-  const [activeRunId, setActiveRunId] = useState(runs[0]?.id ?? "");
-  const [activeItemId, setActiveItemId] = useState<string | null>(null);
-  const [orderedItemIds, setOrderedItemIds] = useState<Set<string>>(new Set());
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [activeRunId, setActiveRunId] = useState<number | null>(null);
+  const [hasLoadedRuns, setHasLoadedRuns] = useState(false);
+  const [activeItemId, setActiveItemId] = useState<number | null>(null);
+  const [orderedItemIds, setOrderedItemIds] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
   const { runNumber, menuItemNumber } = useParams<{
     runNumber?: string;
@@ -134,34 +43,41 @@ function Dashboard() {
   }>();
   const routeRunId = fromRouteRunSegment(runNumber);
   const routeMenuItemId = fromRouteMenuSegment(menuItemNumber);
-  const effectiveRunId = routeRunId ?? activeRunId;
+  const effectiveRunId = routeRunId ?? activeRunId ?? undefined;
 
   const restaurantMap = useMemo(() => {
-    const map = new Map<string, Restaurant>();
-    restaurants.forEach((rest) => map.set(rest.id, rest));
+    const map = new Map<number, Restaurant>();
+    restaurants.forEach((restaurant) => {
+      map.set(restaurant.id, restaurant);
+    });
     return map;
-  }, []);
+  }, [restaurants]);
 
   const activeRun = useMemo(
-    () => runs.find((run) => run.id === effectiveRunId),
-    [effectiveRunId],
+    () =>
+      effectiveRunId === undefined
+        ? undefined
+        : runs.find((run) => run.id === effectiveRunId),
+    [effectiveRunId, runs],
   );
   const runRestaurant = activeRun
     ? restaurantMap.get(activeRun.restaurantId)
     : undefined;
-  const menuItems = runRestaurant?.menu ?? [];
-  const effectiveMenuItemId = routeMenuItemId ?? activeItemId;
-  const activeMenuItem = menuItems.find(
-    (item) => item.id === effectiveMenuItemId,
-  );
+  const menuItems = runRestaurant?.menuItems ?? [];
+  const effectiveMenuItemId = routeMenuItemId ?? activeItemId ?? undefined;
+  const activeMenuItem =
+    effectiveMenuItemId === undefined
+      ? undefined
+      : menuItems.find((item) => item.id === effectiveMenuItemId);
 
-  const panelView: PanelView = routeRunId
-    ? routeMenuItemId
-      ? "menuDetail"
-      : "runDetail"
-    : "runs";
+  const panelView: PanelView =
+    routeRunId !== undefined
+      ? routeMenuItemId !== undefined
+        ? "menuDetail"
+        : "runDetail"
+      : "runs";
 
-  const handleRunSelect = (id: string) => {
+  const handleRunSelect = (id: number) => {
     setActiveRunId(id);
     navigate(`/dashboard/run/${toRouteRunSegment(id)}`);
   };
@@ -170,9 +86,13 @@ function Dashboard() {
     navigate("/dashboard");
   };
 
-  const openMenuDetail = (itemId: string) => {
+  const handleCreateRun = () => {
+    navigate("/runs", { state: { openCreate: true } });
+  };
+
+  const openMenuDetail = (itemId: number) => {
     const targetRunId = routeRunId ?? activeRunId ?? runs[0]?.id;
-    if (!targetRunId) {
+    if (targetRunId === undefined || targetRunId === null) {
       return;
     }
     setActiveItemId(itemId);
@@ -181,7 +101,7 @@ function Dashboard() {
     );
   };
 
-  const handleToggleOrder = (itemId: string) => {
+  const handleToggleOrder = (itemId: number) => {
     setOrderedItemIds((prev) => {
       const next = new Set(prev);
       if (next.has(itemId)) {
@@ -198,8 +118,8 @@ function Dashboard() {
   };
 
   const closeMenuDetail = () => {
-    const targetRunId = routeRunId ?? activeRunId;
-    if (targetRunId) {
+    const targetRunId = routeRunId ?? activeRunId ?? undefined;
+    if (targetRunId !== undefined && targetRunId !== null) {
       navigate(`/dashboard/run/${toRouteRunSegment(targetRunId)}`);
     } else {
       navigate("/dashboard");
@@ -220,7 +140,12 @@ function Dashboard() {
     if (panelView === "runDetail") {
       const parts = [];
       if (runRestaurant) parts.push(runRestaurant.name);
-      if (activeRun) parts.push(`Organised by ${activeRun.organizer}`);
+      if (activeRun) {
+        const organizerLabel =
+          activeRun.organizerName?.trim() ||
+          `Organizer #${activeRun.organizerId}`;
+        parts.push(organizerLabel);
+      }
       return parts.length > 0 ? parts.join(" · ") : "Review the selected run";
     }
     if (panelView === "menuDetail" && activeMenuItem) {
@@ -233,6 +158,8 @@ function Dashboard() {
     return "Track active runs and place orders.";
   })();
 
+  const activeStatusMeta = getStatusMeta(activeRun?.status);
+
   const backButton = (() => {
     if (panelView === "runDetail") {
       return { label: "Back to runs", onClick: handleBackToRuns };
@@ -244,28 +171,35 @@ function Dashboard() {
   })();
 
   useEffect(() => {
-    if (routeRunId) {
-      const runExists = runs.some((run) => run.id === routeRunId);
-      if (runExists && activeRunId !== routeRunId) {
-        setActiveRunId(routeRunId);
-      } else if (!runExists) {
-        navigate("/dashboard", { replace: true });
-      }
+    if (routeRunId === undefined || !hasLoadedRuns) {
+      return;
     }
-  }, [routeRunId, activeRunId, navigate, runs]);
+    const runExists = runs.some((run) => run.id === routeRunId);
+    if (runExists && activeRunId !== routeRunId) {
+      setActiveRunId(routeRunId);
+    } else if (!runExists) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [routeRunId, activeRunId, navigate, runs, hasLoadedRuns]);
 
   useEffect(() => {
-    if (!routeRunId && !activeRunId && runs.length > 0) {
-      setActiveRunId(runs[0].id);
+    if (
+      !hasLoadedRuns ||
+      routeRunId !== undefined ||
+      activeRunId !== null ||
+      runs.length === 0
+    ) {
+      return;
     }
-  }, [routeRunId, activeRunId, runs]);
+    setActiveRunId(runs[0].id);
+  }, [routeRunId, activeRunId, runs, hasLoadedRuns]);
 
   useEffect(() => {
     if (menuItems.length === 0) {
       if (activeItemId !== null) {
         setActiveItemId(null);
       }
-      if (routeMenuItemId && routeRunId) {
+      if (routeMenuItemId !== undefined && routeRunId !== undefined) {
         navigate(`/dashboard/run/${toRouteRunSegment(routeRunId)}`, {
           replace: true,
         });
@@ -273,13 +207,13 @@ function Dashboard() {
       return;
     }
 
-    if (routeMenuItemId) {
+    if (routeMenuItemId !== undefined) {
       const exists = menuItems.some((item) => item.id === routeMenuItemId);
       if (exists) {
         if (activeItemId !== routeMenuItemId) {
           setActiveItemId(routeMenuItemId);
         }
-      } else if (routeRunId) {
+      } else if (routeRunId !== undefined) {
         navigate(`/dashboard/run/${toRouteRunSegment(routeRunId)}`, {
           replace: true,
         });
@@ -287,10 +221,32 @@ function Dashboard() {
       return;
     }
 
-    if (!activeItemId || !menuItems.some((item) => item.id === activeItemId)) {
+    if (
+      activeItemId === null ||
+      !menuItems.some((item) => item.id === activeItemId)
+    ) {
       setActiveItemId(menuItems[0].id);
     }
   }, [menuItems, routeMenuItemId, routeRunId, navigate, activeItemId]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [runsResponse, restaurantsResponse] = await Promise.all([
+          fetchRuns(),
+          fetchRestaurants(),
+        ]);
+
+        setRuns(runsResponse);
+        setRestaurants(restaurantsResponse);
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      } finally {
+        setHasLoadedRuns(true);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="dashboard">
@@ -311,11 +267,11 @@ function Dashboard() {
               <div className="panel-title-stack">
                 <div className="panel-title-row">
                   <h2>{panelTitle}</h2>
-                  {panelView === "runDetail" && activeRun && (
+                  {panelView === "runDetail" && activeStatusMeta && (
                     <span
-                      className={`status-pill panel-status-pill ${activeRun.status === "Open" ? "success" : "muted"}`}
+                      className={`status-pill panel-status-pill ${activeStatusMeta.tone}`}
                     >
-                      {activeRun.status}
+                      {activeStatusMeta.label}
                     </span>
                   )}
                 </div>
@@ -326,7 +282,11 @@ function Dashboard() {
             </div>
 
             <div className="panel-actions">
-              {panelView === "runs" && <button className="btn">New Run</button>}
+              {panelView === "runs" && (
+                <button className="btn" type="button" onClick={handleCreateRun}>
+                  New Run
+                </button>
+              )}
             </div>
           </div>
 
@@ -334,8 +294,8 @@ function Dashboard() {
             {panelView === "runs" && (
               <RunList
                 runs={runs}
-                activeRunId={effectiveRunId ?? ""}
                 restaurantMap={restaurantMap}
+                activeRunId={effectiveRunId ?? null}
                 onSelect={handleRunSelect}
               />
             )}

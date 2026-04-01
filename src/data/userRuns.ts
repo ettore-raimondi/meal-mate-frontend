@@ -1,9 +1,9 @@
 export type RunStatus = "completed" | "in-progress";
 
 export type UserRun = {
-  id: string;
+  id: number;
   name: string;
-  restaurantId: string;
+  restaurantId: number;
   restaurant: string;
   total: string;
   deliveredAt: string;
@@ -13,9 +13,9 @@ export type UserRun = {
 
 export const userRunsSeed: UserRun[] = [
   {
-    id: "runh-301",
+    id: 301,
     name: "Finance Sprint Lunch",
-    restaurantId: "rest-harvest",
+    restaurantId: 101,
     restaurant: "Harvest & Co.",
     total: "€86.40",
     deliveredAt: "Today · 11:55 AM",
@@ -23,9 +23,9 @@ export const userRunsSeed: UserRun[] = [
     status: "in-progress",
   },
   {
-    id: "runh-299",
+    id: 299,
     name: "Design Sync Lunch",
-    restaurantId: "rest-lotus",
+    restaurantId: 102,
     restaurant: "Lotus Bowl",
     total: "€74.10",
     deliveredAt: "Yesterday · 1:22 PM",
@@ -33,9 +33,9 @@ export const userRunsSeed: UserRun[] = [
     status: "completed",
   },
   {
-    id: "runh-298",
+    id: 298,
     name: "Product AMA Snacks",
-    restaurantId: "rest-ridgeway",
+    restaurantId: 103,
     restaurant: "Ridgeway Sandwich",
     total: "€58.25",
     deliveredAt: "Mar 8 · 4:35 PM",
@@ -43,9 +43,9 @@ export const userRunsSeed: UserRun[] = [
     status: "completed",
   },
   {
-    id: "runh-296",
+    id: 296,
     name: "Night Ops Fuel",
-    restaurantId: "rest-seaside",
+    restaurantId: 104,
     restaurant: "Seaside Sushi",
     total: "€129.80",
     deliveredAt: "Mar 6 · 9:10 PM",

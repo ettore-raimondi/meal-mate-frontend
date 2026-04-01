@@ -1,6 +1,28 @@
 import { httpClient } from "../http/http";
 import type { AuthResponseDTO } from "./auth.mapper";
 
+export function getDecodedToken(): {
+  exp: number;
+  iat: number;
+  user_id: number;
+  jti: string;
+  token_type: string;
+} | null {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const payload = token.split(".")[1];
+    const decodedPayload = atob(payload);
+    return JSON.parse(decodedPayload);
+  } catch (error) {
+    console.error("Failed to decode token:", error);
+    return null;
+  }
+}
+
 export async function login({
   email,
   password,

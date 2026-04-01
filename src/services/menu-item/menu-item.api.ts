@@ -1,5 +1,5 @@
 export type MenuItemResponse = {
-  id: string;
+  id: number;
   name: string;
   price: string;
   description: string;
