@@ -395,6 +395,47 @@ a:hover {
   padding-right: 0.25rem;
 }
 
+.menu-detail-field {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.menu-detail-label {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b87a2;
+}
+
+.menu-detail-hero {
+  width: 100%;
+}
+
+.menu-detail-image {
+  width: 100%;
+  height: clamp(180px, 32vh, 280px);
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: #f4f3fb;
+}
+
+.menu-detail-image-placeholder {
+  background:
+    linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(99, 102, 241, 0.1)),
+    #f4f3fb;
+}
+
+.menu-detail-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #1f1d2b;
+}
+
 .restaurant-detail {
   display: flex;
   flex-direction: column;
@@ -778,6 +819,7 @@ a:hover {
 
 .menu-detail-description--large {
   font-size: 1rem;
+  margin: 0;
 }
 
 .menu-detail-meta {
@@ -816,6 +858,7 @@ margin-left: auto;
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  margin-top: 0.25rem;
 }
 
 .blank-state {
@@ -955,6 +998,16 @@ margin-left: auto;
 .btn-danger:hover {
   background: rgba(248, 113, 113, 0.12);
   border-color: rgba(185, 28, 28, 0.6);
+}
+
+.btn-success {
+  background: linear-gradient(120deg, #16a34a, #22c55e);
+  color: #fff;
+  border: none;
+}
+
+.btn-success:hover {
+  box-shadow: 0 12px 24px rgba(34, 197, 94, 0.28);
 }
 
 .runs-grid {

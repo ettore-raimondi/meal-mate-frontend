@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import { CreateRunPanel, type RunFormData } from ".";
-import { createRun, type RunStatus } from "../../services/run";
+import { createRun, completeRun, type RunStatus } from "../../services/run";
 import { useRuns } from "../../hooks/useRuns";
 import { useOrders } from "../../hooks/useOrders";
+import { getDecodedToken } from "../../services/auth";
+import { confirmToast } from "../../components/toast/confirmToast";
 import { toast } from "sonner";
 import { getStatusMeta } from "../dashboard/runStatusMeta";
 
@@ -21,6 +23,16 @@ const parseNumericParam = (value?: string) => {
   }
   const parsed = Number(value);
   return Number.isNaN(parsed) ? undefined : parsed;
+};
+
+const toDateTimeLocalValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 const formatDeadlineLabel = (deadline?: Date) => {
@@ -40,9 +52,10 @@ function Runs() {
   const location = useLocation();
   const { runId: runIdParam } = useParams<{ runId?: string }>();
   const routeRunId = parseNumericParam(runIdParam);
-  const { enrichedRuns } = useRuns();
+  const { enrichedRuns, refreshRuns } = useRuns();
   const { orders } = useOrders();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const isEditingRoute = routeRunId !== undefined;
   const orderedRunIds = useMemo(
     () => new Set(orders.map((order) => order.foodRun)),
@@ -66,6 +79,17 @@ function Runs() {
     routeRunId !== undefined
       ? enrichedRuns.find((run) => run.id === routeRunId)
       : undefined;
+  const currentUserId = useMemo(() => {
+    try {
+      return getDecodedToken().user_id;
+    } catch {
+      return null;
+    }
+  }, []);
+  const canCompleteRun =
+    Boolean(activeRun) &&
+    Number(activeRun?.organizerId) === Number(currentUserId) &&
+    activeRun?.status !== "COMPLETED";
 
   useEffect(() => {
     if (isEditingRoute) {
@@ -121,18 +145,50 @@ function Runs() {
     setIsCreateOpen(false);
   };
 
+  const handleCompleteRun = async () => {
+    if (!activeRun || !canCompleteRun) {
+      return;
+    }
+
+    const confirmed = await confirmToast({
+      title: "Complete this run?",
+      description:
+        "This will mark the run as completed for everyone in this food run.",
+      confirmLabel: "Complete run",
+      cancelLabel: "Cancel",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsCompleting(true);
+    try {
+      await completeRun(activeRun.id);
+      await refreshRuns();
+      toast.success("Run marked as completed.");
+      navigate("/runs", { replace: true });
+    } catch (error) {
+      console.error("Failed to complete run", error);
+      toast.error("Could not complete the run. Please try again.");
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
   const editInitialValues = activeRun
     ? {
         id: activeRun.id,
         name: activeRun.name,
         restaurantId: activeRun.restaurant.id,
         restaurantLabel: activeRun.restaurant.name,
-        deadline: activeRun.deadline.toISOString().split("T")[0],
+        deadline: toDateTimeLocalValue(activeRun.deadline),
       }
     : undefined;
 
   const isPanelVisible = isCreateOpen || isEditingRoute;
   const panelMode = isEditingRoute ? "edit" : "create";
+  const isRunLocked = panelMode === "edit" && activeRun?.status === "COMPLETED";
   const disableCreateButton = isPanelVisible;
   const shouldShowPanel =
     isPanelVisible && (!isEditingRoute || Boolean(activeRun));
@@ -145,8 +201,21 @@ function Runs() {
           <CreateRunPanel
             mode={panelMode}
             initialValues={panelMode === "edit" ? editInitialValues : undefined}
-            onSubmit={handleSubmitRun}
+            isLocked={isRunLocked}
+            onSubmit={isRunLocked ? undefined : handleSubmitRun}
             onClose={handleClosePanel}
+            actionSlot={
+              panelMode === "edit" && canCompleteRun ? (
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={handleCompleteRun}
+                  disabled={isCompleting}
+                >
+                  {isCompleting ? "Completing..." : "Complete run"}
+                </button>
+              ) : undefined
+            }
           />
         ) : (
           <section className="panel runs-panel full-panel">

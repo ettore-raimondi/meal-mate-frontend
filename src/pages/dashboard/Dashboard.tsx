@@ -108,6 +108,10 @@ function Dashboard() {
   };
 
   const handleToggleOrder = (itemId: number) => {
+    if (isRunCompleted) {
+      return;
+    }
+
     setOrderedItemIds((prev) => {
       const next = new Set(prev);
       if (next.has(itemId)) {
@@ -120,6 +124,10 @@ function Dashboard() {
   };
 
   const handlePlaceOrder = async () => {
+    if (isRunCompleted) {
+      return;
+    }
+
     const order = await createOrder({
       foodRun: activeRunId!,
       menuItems: Array.from(orderedItemIds),
@@ -172,6 +180,7 @@ function Dashboard() {
   })();
 
   const activeStatusMeta = getStatusMeta(activeEnrichedRun?.status);
+  const isRunCompleted = activeEnrichedRun?.status === "COMPLETED";
   const orderedRunIds = useMemo(
     () => new Set(orders.map((order) => order.foodRun)),
     [orders],
@@ -263,7 +272,7 @@ function Dashboard() {
               )}
               <div className="panel-title-stack">
                 <div className="panel-title-row">
-                  <h2>{panelTitle}</h2>
+                  {panelView !== "menuDetail" ? <h2>{panelTitle}</h2> : null}
                   {panelView === "runDetail" && activeStatusMeta && (
                     <span
                       className={`status-pill panel-status-pill ${activeStatusMeta.tone}`}
@@ -303,19 +312,21 @@ function Dashboard() {
                   <MenuItemDetail
                     menuItem={activeMenuItem}
                     actionSlot={
-                      <button
-                        className={`btn ${
-                          orderedItemIds.has(activeMenuItem.id)
-                            ? "btn-outline btn-danger"
-                            : ""
-                        }`}
-                        type="button"
-                        onClick={() => handleToggleOrder(activeMenuItem.id)}
-                      >
-                        {orderedItemIds.has(activeMenuItem.id)
-                          ? "Remove item"
-                          : "Order item"}
-                      </button>
+                      isRunCompleted ? undefined : (
+                        <button
+                          className={`btn ${
+                            orderedItemIds.has(activeMenuItem.id)
+                              ? "btn-outline btn-danger"
+                              : ""
+                          }`}
+                          type="button"
+                          onClick={() => handleToggleOrder(activeMenuItem.id)}
+                        >
+                          {orderedItemIds.has(activeMenuItem.id)
+                            ? "Remove item"
+                            : "Order item"}
+                        </button>
+                      )
                     }
                   />
                 ) : (
@@ -330,6 +341,7 @@ function Dashboard() {
                     orderNote={orderNote}
                     onOrderNoteChange={setOrderNote}
                     onOrderedItemsChange={setOrderedItemIds}
+                    isLocked={isRunCompleted}
                   />
                 )}
               </div>

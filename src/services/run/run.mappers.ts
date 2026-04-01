@@ -8,7 +8,7 @@ export function mapRunResponseToRuns(runResponse: RunResponse[]): Run[] {
     restaurantId: response.restaurant,
     deadline: new Date(response.deadline),
     description: response.description,
-    organizerId: response.organizer,
+    organizerId: Number(response.organizer),
     organizerName: response.organizer_name,
     status: response.status,
     createdAt: response.created_at ? new Date(response.created_at) : undefined,

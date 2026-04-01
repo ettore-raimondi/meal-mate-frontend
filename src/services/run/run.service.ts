@@ -20,10 +20,10 @@ export async function createRun({
     body: {
       name,
       description,
-      restaurant: restaurant_id,
+      restaurant: restaurant_id.toString(),
       organizer: token.user_id,
       deadline,
-      status: "OPEN",
+      status,
     },
   });
   return mapRunResponseToRuns([createdRun])[0];
@@ -34,4 +34,14 @@ export async function fetchRuns() {
     method: "GET",
   });
   return mapRunResponseToRuns(runs);
+}
+
+export async function completeRun(runId: number) {
+  const updatedRun = await httpClient("food_runs/:id/", {
+    method: "PATCH",
+    urlParams: { id: runId.toString() },
+    body: { status: "COMPLETED" },
+  });
+
+  return mapRunResponseToRuns([updatedRun])[0];
 }

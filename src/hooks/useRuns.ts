@@ -8,6 +8,7 @@ import { AppContext } from "../context/AppContext";
 export function useRuns(): {
   runs: Run[];
   enrichedRuns: RunEnriched[];
+  refreshRuns: () => Promise<void>;
 } {
   const { restaurants } = React.useContext(AppContext);
   const [runs, setRuns] = useState<Run[]>([]);
@@ -46,5 +47,5 @@ export function useRuns(): {
     })();
   }, []);
 
-  return { runs, enrichedRuns };
+  return { runs, enrichedRuns, refreshRuns: fetchRunsData };
 }

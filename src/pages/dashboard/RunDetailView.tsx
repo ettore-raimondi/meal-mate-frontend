@@ -10,6 +10,7 @@ type RunDetailViewProps = {
   activeRunId?: number;
   activeItemId: number | null;
   orderedItemIds: Set<number>;
+  isLocked?: boolean;
   onSelectMenuItem: (itemId: number) => void;
   onToggleOrder: (itemId: number) => void;
   onPlaceOrder: () => void;
@@ -23,6 +24,7 @@ function RunDetailView({
   activeRunId,
   activeItemId,
   orderedItemIds,
+  isLocked = false,
   onSelectMenuItem,
   onToggleOrder,
   onPlaceOrder,
@@ -79,6 +81,9 @@ function RunDetailView({
               role="button"
               tabIndex={0}
               onKeyDown={(event) => {
+                if (isLocked) {
+                  return;
+                }
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
                   onSelectMenuItem(item.id);
@@ -105,6 +110,7 @@ function RunDetailView({
                   event.stopPropagation();
                   onToggleOrder(item.id);
                 }}
+                disabled={isLocked}
               >
                 {orderedItemIds.has(item.id) ? "−" : "+"}
               </button>
@@ -123,13 +129,18 @@ function RunDetailView({
           rows={2}
           value={orderNote}
           onChange={(event) => onOrderNoteChange(event.target.value)}
+          disabled={isLocked}
         />
       </label>
 
       <OrderSummaryCard
         items={orderSummaryItems}
         emptyMessage="No items added yet."
-        action={{ label: "Place order →", onClick: onPlaceOrder }}
+        action={{
+          label: isLocked ? "Run completed" : "Place order →",
+          onClick: onPlaceOrder,
+          disabled: isLocked,
+        }}
       />
     </section>
   );

@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import RunFormField from "./RunFormField";
 import type {
   RestaurantOption,
@@ -11,6 +12,7 @@ type CreateRunFormProps = {
   mode: "create" | "edit";
   restaurants: RestaurantOption[];
   isLoadingRestaurants?: boolean;
+  isLocked?: boolean;
   initialValues?: RunInitialValues;
   onSubmit?: (payload: RunFormData) => Promise<void> | void;
   onCancel?: () => void;
@@ -36,6 +38,7 @@ function CreateRunForm({
   mode,
   restaurants,
   isLoadingRestaurants = false,
+  isLocked = false,
   initialValues,
   onSubmit,
   onCancel,
@@ -135,7 +138,7 @@ function CreateRunForm({
   const selectDisabled =
     isLoadingRestaurants ||
     (!hasFallbackRestaurant && restaurants.length === 0);
-  const submitDisabled = !isValid || isSubmitting || selectDisabled;
+  const submitDisabled = !isValid || isSubmitting || selectDisabled || isLocked;
   const submitLabel = mode === "create" ? "Create run" : "Save changes";
   const submittingLabel = mode === "create" ? "Creating..." : "Saving...";
 
@@ -156,6 +159,7 @@ function CreateRunForm({
           onChange={(event) => handleChange("name", event.target.value)}
           onBlur={() => handleBlur("name")}
           autoComplete="off"
+          disabled={isLocked}
         />
       </RunFormField>
 
@@ -177,7 +181,7 @@ function CreateRunForm({
             handleChange("restaurantId", Number(event.target.value))
           }
           onBlur={() => handleBlur("restaurantId")}
-          disabled={selectDisabled}
+          disabled={selectDisabled || isLocked}
         >
           <option value="" disabled>
             {isLoadingRestaurants
@@ -210,8 +214,15 @@ function CreateRunForm({
           value={formState.deadline}
           onChange={(event) => handleChange("deadline", event.target.value)}
           onBlur={() => handleBlur("deadline")}
+          disabled={isLocked}
         />
       </RunFormField>
+
+      {isLocked ? (
+        <p className="field-helper">
+          This run is completed and can no longer be edited.
+        </p>
+      ) : null}
 
       <div className="form-actions">
         <button

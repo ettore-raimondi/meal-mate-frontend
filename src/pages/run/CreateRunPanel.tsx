@@ -1,21 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { fetchRestaurants } from "../../services/restaurant/restaurant.service";
-import type { Restaurant } from "../../components/homeTypes";
+import type { Restaurant } from "../../services/restaurant";
 import CreateRunForm from "./CreateRunForm";
 import type { RestaurantOption, RunFormData, RunInitialValues } from "./types";
 
 type CreateRunPanelProps = {
   mode: "create" | "edit";
   initialValues?: RunInitialValues;
+  isLocked?: boolean;
   onSubmit?: (payload: RunFormData) => Promise<void> | void;
   onClose?: () => void;
+  actionSlot?: ReactNode;
 };
 
 function CreateRunPanel({
   mode,
   initialValues,
+  isLocked = false,
   onSubmit,
   onClose,
+  actionSlot,
 }: CreateRunPanelProps) {
   const [restaurants, setRestaurants] = useState<RestaurantOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,6 +82,7 @@ function CreateRunPanel({
             <p className="panel-subtitle">{panelSubtitle}</p>
           </div>
         </div>
+        {actionSlot ? <div className="panel-actions">{actionSlot}</div> : null}
       </div>
 
       {fetchError ? (
@@ -92,6 +98,7 @@ function CreateRunPanel({
         mode={mode}
         restaurants={restaurants}
         isLoadingRestaurants={isLoading}
+        isLocked={isLocked}
         initialValues={initialValues}
         onSubmit={handleSubmit}
         onCancel={onClose}
