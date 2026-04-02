@@ -1,8 +1,8 @@
 import { createContext } from "react";
-import { type Restaurant } from "../services/restaurant/restaurant.types";
+import type { RestaurantEnriched } from "../services/restaurant";
 
 export const AppContext = createContext<{
-  restaurants: Restaurant[];
+  restaurants: RestaurantEnriched[];
 }>({
   // Define any global state or functions you want to share across components here
   restaurants: [],

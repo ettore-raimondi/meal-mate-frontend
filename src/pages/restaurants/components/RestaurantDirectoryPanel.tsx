@@ -1,9 +1,9 @@
-import type { Restaurant } from "../../../components/homeTypes";
+import type { RestaurantEnriched } from "../../../services/restaurant";
 import RestaurantList from "../RestaurantList";
 
 type RestaurantDirectoryPanelProps = {
-  owned: Restaurant[];
-  nearby: Restaurant[];
+  owned: RestaurantEnriched[];
+  nearby: RestaurantEnriched[];
   onSelectOwned: (restaurantId: number) => void;
   onSelectNearby: (restaurantId: number) => void;
 };

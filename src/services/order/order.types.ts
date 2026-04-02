@@ -39,6 +39,14 @@ export type OrderEnriched = Omit<Order, "menuItems"> & {
   restaurant: {
     id: number;
     name: string;
+    address: string;
+    phoneNumber: string;
+  };
+  run?: {
+    id: number;
+    name: string;
+    deadlineFormatted: string;
+    status: "OPEN" | "CLOSED" | "IN_PROGRESS" | "COMPLETED";
   };
   menuItems: {
     id: number;

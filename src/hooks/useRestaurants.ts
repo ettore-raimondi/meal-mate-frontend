@@ -1,17 +1,14 @@
 import { useState, useEffect } from "react";
 import {
   fetchRestaurants,
-  type Restaurant,
   type RestaurantEnriched,
 } from "../services/restaurant";
 
 export function useRestaurants(): {
-  restaurants: Restaurant[];
+  restaurants: RestaurantEnriched[];
   enrichedRestaurants: RestaurantEnriched[];
 } {
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-
-  const enrichedRestaurants: RestaurantEnriched[] = restaurants;
+  const [restaurants, setRestaurants] = useState<RestaurantEnriched[]>([]);
 
   async function fetch() {
     const restaurantsData = await fetchRestaurants();
@@ -24,5 +21,5 @@ export function useRestaurants(): {
     })();
   }, []);
 
-  return { restaurants, enrichedRestaurants };
+  return { restaurants, enrichedRestaurants: restaurants };
 }

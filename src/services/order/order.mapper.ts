@@ -1,5 +1,6 @@
 import type { Restaurant } from "../restaurant";
 import type { OrderResponse, Order, OrderEnriched } from "./order.types";
+import type { Run } from "../run";
 import { formatHumanDateTime } from "../../helpers/date";
 
 export function mapToOrder(orderDTO: OrderResponse): Order {
@@ -20,6 +21,7 @@ export function mapToOrder(orderDTO: OrderResponse): Order {
 export function mapToEnrichedOrder(
   order: Order,
   restaurant: Restaurant,
+  run?: Run,
 ): OrderEnriched {
   return {
     ...order,
@@ -27,7 +29,17 @@ export function mapToEnrichedOrder(
     restaurant: {
       id: restaurant.id,
       name: restaurant.name,
+      address: restaurant.address,
+      phoneNumber: restaurant.phoneNumber,
     },
+    run: run
+      ? {
+          id: run.id,
+          name: run.name,
+          deadlineFormatted: formatHumanDateTime(run.deadline),
+          status: run.status,
+        }
+      : undefined,
     menuItems: restaurant.menuItems.map((item) => ({
       id: item.id,
       name: item.name,

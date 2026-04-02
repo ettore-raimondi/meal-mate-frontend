@@ -1,4 +1,4 @@
-import { FormEvent } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { MenuDraftMode, MenuDraftState } from "./types";
 
 type RestaurantMenuEditorProps = {
@@ -19,6 +19,13 @@ function RestaurantMenuEditor({
   onCancel,
 }: RestaurantMenuEditorProps) {
   const isEditMode = mode.type === "edit";
+  const [previewLoadFailed, setPreviewLoadFailed] = useState(false);
+  const previewUrl = useMemo(() => draft.imageUrl.trim(), [draft.imageUrl]);
+
+  useEffect(() => {
+    setPreviewLoadFailed(false);
+  }, [previewUrl]);
+
   return (
     <div className="restaurant-menu-editor">
       <div className="menu-editor-header">
@@ -58,6 +65,26 @@ function RestaurantMenuEditor({
             placeholder="https://example.com/photo.jpg"
           />
         </label>
+        <div className="menu-editor-image-preview">
+          <p className="section-label">Preview</p>
+          {!previewUrl ? (
+            <div className="menu-editor-image-fallback">
+              Add an image URL to preview the menu item image.
+            </div>
+          ) : previewLoadFailed ? (
+            <div className="menu-editor-image-fallback">
+              Could not load image preview.
+            </div>
+          ) : (
+            <img
+              src={previewUrl}
+              alt={draft.name || "Menu item preview"}
+              className="menu-editor-image"
+              loading="lazy"
+              onError={() => setPreviewLoadFailed(true)}
+            />
+          )}
+        </div>
         <label>
           Description
           <textarea

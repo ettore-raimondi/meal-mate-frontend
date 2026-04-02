@@ -1,4 +1,4 @@
-import { MenuItem } from "../homeTypes";
+import type { MenuItem } from "../../services/menu-item";
 
 export type RestaurantFormState = {
   name: string;

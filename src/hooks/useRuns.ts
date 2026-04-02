@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Run, RunEnriched } from "../services/run";
 import { fetchRuns, mapToEnrichedRun } from "../services/run";
-import type { Restaurant } from "../services/restaurant";
+import type { RestaurantEnriched } from "../services/restaurant";
 import React from "react";
 import { AppContext } from "../context/AppContext";
 
@@ -13,7 +13,7 @@ export function useRuns(): {
   const { restaurants } = React.useContext(AppContext);
   const [runs, setRuns] = useState<Run[]>([]);
 
-  const restaurantMap = new Map<number, Restaurant>();
+  const restaurantMap = new Map<number, RestaurantEnriched>();
   restaurants.forEach((restaurant) => {
     restaurantMap.set(restaurant.id, restaurant);
   });

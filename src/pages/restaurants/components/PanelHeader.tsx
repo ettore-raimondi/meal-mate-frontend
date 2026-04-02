@@ -1,6 +1,7 @@
 type PanelHeaderProps = {
   viewingDetail: boolean;
   isEditingMenu: boolean;
+  isShowingMenuView: boolean;
   panelTitle: string;
   panelSubtitle: string;
   activeRestaurantName?: string;
@@ -11,6 +12,7 @@ type PanelHeaderProps = {
 function PanelHeader({
   viewingDetail,
   isEditingMenu,
+  isShowingMenuView,
   panelTitle,
   panelSubtitle,
   activeRestaurantName,
@@ -28,7 +30,9 @@ function PanelHeader({
             <span>
               {isEditingMenu
                 ? `Back to ${activeRestaurantName ?? "details"}`
-                : "Back to restaurants"}
+                : isShowingMenuView
+                  ? "Back to details"
+                  : "Back to restaurants"}
             </span>
           </button>
         )}

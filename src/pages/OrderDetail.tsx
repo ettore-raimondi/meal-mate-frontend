@@ -23,6 +23,13 @@ function OrderDetail() {
         price: item.price,
       }))
     : [];
+  const formattedRunStatus = order?.run
+    ? order.run.status
+        .toLowerCase()
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+    : undefined;
 
   const handleBack = () => navigate("/orders");
 
@@ -49,7 +56,7 @@ function OrderDetail() {
                 </div>
                 <p className="panel-subtitle">
                   {order
-                    ? `${order.menuItems.length} items · ${order.createdAtFormatted}`
+                    ? `${order.menuItems.length} items in this order`
                     : "We couldn't find that order. Return to your history."}
                 </p>
               </div>
@@ -60,29 +67,43 @@ function OrderDetail() {
             <div className="run-detail scrollable">
               {order ? (
                 <section className="menu-section order-detail-section">
-                  <div className="order-detail-meta">
-                    <div>
-                      <p className="muted-label">Order ID</p>
-                      <h3>{order.id}</h3>
-                    </div>
-                    <div className="order-detail-meta-total">
-                      <span className="muted-label">Total:</span>
-                      <strong>{order.total}</strong>
-                    </div>
+                  <p className="section-label">Order info</p>
+                  <div className="order-info-bar">
+                    <span className="order-info-chip">Order #{order.id}</span>
+                    <span className="order-info-text">
+                      Placed on {order.createdAtFormatted}
+                    </span>
+                    <span className="order-info-text">
+                      {order.menuItems.length} items
+                    </span>
                   </div>
-                  <div className="order-detail-fields">
-                    <div>
-                      <p className="muted-label">Restaurant</p>
-                      <strong>{order.restaurant.name}</strong>
-                    </div>
-                    <div>
-                      <p className="muted-label">Status</p>
-                      <strong>{statusMeta?.label ?? "Unknown"}</strong>
-                    </div>
-                    <div>
-                      <p className="muted-label">Items</p>
-                      <strong>{order.menuItems.length}</strong>
-                    </div>
+                  <p className="section-label">Run info</p>
+                  <div className="run-info-bar">
+                    <span className="run-info-chip">
+                      {order.run ? order.run.name : `Run #${order.foodRun}`}
+                    </span>
+                    <span className="run-info-text">
+                      {order.run
+                        ? `Deadline ${order.run.deadlineFormatted}`
+                        : `Run #${order.foodRun}`}
+                    </span>
+                    {order.run && (
+                      <span className="run-info-text">
+                        Status {formattedRunStatus}
+                      </span>
+                    )}
+                  </div>
+                  <p className="section-label">Restaurant info</p>
+                  <div className="restaurant-info-bar">
+                    <span className="restaurant-info-chip">
+                      {order.restaurant.name}
+                    </span>
+                    <span className="restaurant-info-text">
+                      {order.restaurant.address}
+                    </span>
+                    <span className="restaurant-info-text">
+                      {order.restaurant.phoneNumber}
+                    </span>
                   </div>
                   <OrderSummaryCard
                     title="Order summary"
@@ -90,6 +111,12 @@ function OrderDetail() {
                     emptyMessage="This order has no recorded items."
                     totalLabel="Total"
                   />
+                  {order.note && (
+                    <div className="order-notes-section">
+                      <p className="muted-label">Special notes</p>
+                      <p className="order-notes-text">{order.note}</p>
+                    </div>
+                  )}
                 </section>
               ) : (
                 <div className="blank-state">

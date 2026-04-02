@@ -33,35 +33,37 @@ function OrderSummaryCard({
 
   return (
     <div className="order-summary">
-      {title && <h4>{title}</h4>}
-      {hasItems ? (
-        <>
-          <ul className="order-summary-list">
-            {items.map((item) => (
-              <li key={item.id} className="order-summary-row">
-                <span>{item.name}</span>
-                <span>{formatEuroPrice(item.price)}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="order-summary-total">
-            <span>{totalLabel}</span>
-            <span>{formatEuroPrice(orderTotal.toFixed(2))}</span>
-          </div>
-          {action && hasItems && (
-            <button
-              className="order-summary-place-btn"
-              type="button"
-              onClick={action.onClick}
-              disabled={action.disabled}
-            >
-              {action.label}
-            </button>
-          )}
-        </>
-      ) : (
-        <p className="muted-label">{emptyMessage}</p>
-      )}
+      {title && <h4 className="section-label">{title}</h4>}
+      <div className="order-summary-body">
+        {hasItems ? (
+          <>
+            <ul className="order-summary-list">
+              {items.map((item) => (
+                <li key={item.id} className="order-summary-row">
+                  <span>{item.name}</span>
+                  <span>{formatEuroPrice(item.price)}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="order-summary-total">
+              <span>{totalLabel}</span>
+              <span>{formatEuroPrice(orderTotal.toFixed(2))}</span>
+            </div>
+            {action && hasItems && (
+              <button
+                className="order-summary-place-btn"
+                type="button"
+                onClick={action.onClick}
+                disabled={action.disabled}
+              >
+                {action.label}
+              </button>
+            )}
+          </>
+        ) : (
+          <p className="muted-label">{emptyMessage}</p>
+        )}
+      </div>
     </div>
   );
 }

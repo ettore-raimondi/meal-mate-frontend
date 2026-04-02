@@ -4,15 +4,16 @@ import { formatEuroPrice } from "../../helpers/currency";
 import MenuItemDetail from "./MenuItemDetail";
 import RunDetailView from "./RunDetailView";
 import RunList from "./RunList";
-import type { PanelView } from "../../components/homeTypes";
 import Sidebar from "../../components/Sidebar";
 import { useRuns } from "../../hooks/useRuns";
 import { useOrders } from "../../hooks/useOrders";
 import { AppContext } from "../../context/AppContext";
-import type { Restaurant } from "../../services/restaurant";
+import type { RestaurantEnriched } from "../../services/restaurant";
 import { getStatusMeta } from "./runStatusMeta";
 import { createOrder } from "../../services/order/order.service";
 import { toast } from "sonner";
+
+type PanelView = "runs" | "runDetail" | "menuDetail";
 
 const toRouteRunSegment = (id: number) => encodeURIComponent(String(id));
 const toRouteMenuSegment = (id: number) => encodeURIComponent(String(id));
@@ -51,7 +52,7 @@ function Dashboard() {
   const effectiveRunId = routeRunId ?? activeRunId ?? undefined;
 
   const restaurantMap = useMemo(() => {
-    const map = new Map<number, Restaurant>();
+    const map = new Map<number, RestaurantEnriched>();
     restaurants.forEach((restaurant) => {
       map.set(restaurant.id, restaurant);
     });

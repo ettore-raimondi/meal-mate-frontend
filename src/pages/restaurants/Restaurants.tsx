@@ -1,7 +1,7 @@
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
-import type { MenuItem, Restaurant } from "../../components/homeTypes";
+import type { MenuItem } from "../../services/menu-item";
 import {
   emptyMenuDraft,
   emptyRestaurantForm,
@@ -37,13 +37,16 @@ import {
   useRestaurantCollections,
   useRestaurantSelection,
 } from "./hooks";
-import type { RestaurantFormData } from "../../services/restaurant";
+import type {
+  RestaurantEnriched,
+  RestaurantFormData,
+} from "../../services/restaurant";
 
 let nextTempMenuItemId = -1;
 const generateMenuItemTempId = () => nextTempMenuItemId--;
 
 const toRestaurantFormState = (
-  restaurant?: Partial<Restaurant> | null,
+  restaurant?: Partial<RestaurantEnriched> | null,
 ): RestaurantFormState => ({
   name: restaurant?.name ?? "",
   address: restaurant?.address ?? "",
@@ -55,8 +58,10 @@ const toRestaurantFormState = (
 function Restaurants() {
   const navigate = useNavigate();
   const { restaurantNumber } = useParams<{ restaurantNumber?: string }>();
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [restaurantsNearMe, setRestaurantsNearMe] = useState<Restaurant[]>([]);
+  const [restaurants, setRestaurants] = useState<RestaurantEnriched[]>([]);
+  const [restaurantsNearMe, setRestaurantsNearMe] = useState<
+    RestaurantEnriched[]
+  >([]);
   const [menuEditorMode, setMenuEditorMode] = useState<MenuDraftMode | null>(
     null,
   );
@@ -65,6 +70,7 @@ function Restaurants() {
     useState<RestaurantFormState>(emptyRestaurantForm);
   const [newRestaurantMenu, setNewRestaurantMenu] = useState<MenuItem[]>([]);
   const [isSavingNearby, setIsSavingNearby] = useState(false);
+  const [showingMenuView, setShowingMenuView] = useState(false);
 
   const loadNearbyRestaurants = useCallback(async () => {
     const coordinates = await fetchCoordinates();
@@ -75,11 +81,7 @@ function Restaurants() {
       coordinates.latitude,
       coordinates.longitude,
     );
-    const normalized = nearbyRestaurants.map((restaurant) => ({
-      ...restaurant,
-      menu: restaurant.menu ?? [],
-    }));
-    setRestaurantsNearMe(normalized);
+    setRestaurantsNearMe(nearbyRestaurants);
   }, []);
 
   const loadOwnedRestaurants = useCallback(async () => {
@@ -103,12 +105,14 @@ function Restaurants() {
 
   const currentMenuItems = isCreatingRestaurant
     ? newRestaurantMenu
-    : (activeRestaurant?.menu ?? []);
+    : (activeRestaurant?.menuItems ?? []);
   const isNearbyRestaurantDetail =
     activeRestaurantSource === "nearby" &&
     viewingDetail &&
     !isCreatingRestaurant;
   const isEditingMenu = Boolean(menuEditorMode);
+  const isShowingMenuView =
+    showingMenuView && viewingDetail && !isCreatingRestaurant && !isEditingMenu;
 
   useEffect(() => {
     if (!restaurantRouteId) {
@@ -176,11 +180,12 @@ function Restaurants() {
       : "Browse all partner kitchens.";
 
   const handleSelectRestaurant = async (restaurantId: number) => {
+    setShowingMenuView(false);
     try {
       const menuItems = await getMenuItemsForRestaurant(restaurantId);
       updateRestaurantInCollection("owned", restaurantId, (restaurant) => ({
         ...restaurant,
-        menu: menuItems,
+        menuItems,
       }));
     } catch (error) {
       console.error("Failed to load menu items:", error);
@@ -191,14 +196,17 @@ function Restaurants() {
   };
 
   const handleSelectNearbyRestaurant = (restaurantId: number) => {
+    setShowingMenuView(false);
     navigate(`/restaurants/${restaurantId}`);
   };
 
   const handleBackToRestaurants = () => {
+    setShowingMenuView(false);
     navigate("/restaurants");
   };
 
   const handleBeginCreateRestaurant = () => {
+    setShowingMenuView(false);
     setMenuEditorMode(null);
     setMenuEditor(emptyMenuDraft);
     navigate(`/restaurants/${NEW_RESTAURANT_SLUG}`);
@@ -279,7 +287,7 @@ function Restaurants() {
       activeRestaurant.id,
       (restaurant) => ({
         ...restaurant,
-        menu: updater(restaurant.menu ?? []),
+        menuItems: updater(restaurant.menuItems ?? []),
       }),
     );
   };
@@ -348,7 +356,7 @@ function Restaurants() {
   const handleDeleteMenuItem = async (itemId: number) => {
     const sourceMenu = isCreatingRestaurant
       ? newRestaurantMenu
-      : (activeRestaurant?.menu ?? []);
+      : (activeRestaurant?.menuItems ?? []);
     const targetItem = sourceMenu.find((item) => item.id === itemId);
 
     const confirmed = await confirmToast({
@@ -398,7 +406,7 @@ function Restaurants() {
 
   const handleUpdateRestaurant = async (restaurantForm: RestaurantFormData) => {
     if (!activeRestaurant || !activeRestaurantSource) {
-      return;
+      return undefined;
     }
 
     const updatedRestaurant = await updateRestaurant(
@@ -408,15 +416,22 @@ function Restaurants() {
 
     await updateMenuItemsService(
       activeRestaurant.id,
-      activeRestaurant.menu ?? [],
+      activeRestaurant.menuItems ?? [],
     );
 
-    try {
-      await loadOwnedRestaurants();
-    } catch (error) {
-      console.error("Failed to refresh restaurants", error);
-    }
-    toast.success(`${updatedRestaurant.name} has been updated.`);
+    await loadOwnedRestaurants();
+    const refreshedMenuItems = await getMenuItemsForRestaurant(
+      activeRestaurant.id,
+    );
+    updateRestaurantInCollection(
+      "owned",
+      activeRestaurant.id,
+      (restaurant) => ({
+        ...restaurant,
+        menuItems: refreshedMenuItems,
+      }),
+    );
+    return updatedRestaurant.name;
   };
 
   const handleRestaurantFormSubmit = async (
@@ -428,6 +443,10 @@ function Restaurants() {
       return;
     }
     await handleUpdateRestaurant(restaurantForm);
+  };
+
+  const handleSaveRestaurantDetails = async () => {
+    return handleUpdateRestaurant(restaurantForm);
   };
 
   const handleSaveNearbyRestaurant = async () => {
@@ -476,6 +495,7 @@ function Restaurants() {
     activeRestaurant,
     isNearbyRestaurantDetail,
     isSavingNearby,
+    showingMenuView,
   };
 
   const detailActions: RestaurantDetailActions = {
@@ -495,11 +515,13 @@ function Restaurants() {
     onDeleteMenuItem: (item) => {
       void handleDeleteMenuItem(item.id);
     },
+    onSaveRestaurantDetails: handleSaveRestaurantDetails,
     onSaveNearbyRestaurant: handleSaveNearbyRestaurant,
     onDeleteRestaurant: activeRestaurant
       ? requestRestaurantDeletion
       : undefined,
     onScrapeMenuItems: handleScrapeMenuItems,
+    setShowingMenuView,
   };
 
   return (
@@ -510,10 +532,17 @@ function Restaurants() {
           <PanelHeader
             viewingDetail={viewingDetail}
             isEditingMenu={isEditingMenu}
+            isShowingMenuView={isShowingMenuView}
             panelTitle={panelTitle}
             panelSubtitle={panelSubtitle}
             activeRestaurantName={activeRestaurant?.name}
-            onBack={isEditingMenu ? cancelMenuEditor : handleBackToRestaurants}
+            onBack={
+              isEditingMenu
+                ? cancelMenuEditor
+                : isShowingMenuView
+                  ? () => setShowingMenuView(false)
+                  : handleBackToRestaurants
+            }
             onBeginCreate={handleBeginCreateRestaurant}
           />
 

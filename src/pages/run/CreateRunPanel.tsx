@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { fetchRestaurants } from "../../services/restaurant/restaurant.service";
-import type { Restaurant } from "../../services/restaurant";
+import type { RestaurantEnriched } from "../../services/restaurant";
 import CreateRunForm from "./CreateRunForm";
 import type { RestaurantOption, RunFormData, RunInitialValues } from "./types";
 
@@ -26,7 +26,7 @@ function CreateRunPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const mapToOptions = (items: Restaurant[]): RestaurantOption[] =>
+  const mapToOptions = (items: RestaurantEnriched[]): RestaurantOption[] =>
     items.map((restaurant) => ({ id: restaurant.id, label: restaurant.name }));
 
   const loadRestaurants = useCallback(async () => {

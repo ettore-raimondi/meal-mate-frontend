@@ -1,5 +1,5 @@
 import { formatEuroPrice } from "../../helpers/currency";
-import { MenuItem } from "../../components/homeTypes";
+import type { MenuItem } from "../../services/menu-item";
 
 type RestaurantMenuSectionProps = {
   menu: MenuItem[];

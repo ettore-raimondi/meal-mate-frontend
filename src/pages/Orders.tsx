@@ -67,7 +67,7 @@ function Orders() {
                         <span className="muted-label">
                           {order.createdAtFormatted}
                         </span>
-                        <strong>{order.total}</strong>
+                        <strong>€{order.total}</strong>
                       </div>
                     </article>
                   );

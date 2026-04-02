@@ -1,11 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const NAV_ITEMS = [
   { key: "dashboard", label: "Dashboard", path: "/dashboard" },
   { key: "restaurants", label: "Restaurants", path: "/restaurants" },
   { key: "runs", label: "Runs", path: "/runs" },
   { key: "orders", label: "Orders", path: "/orders" },
-  { key: "team", label: "Team" },
 ];
 
 type SidebarProps = {
@@ -14,11 +14,30 @@ type SidebarProps = {
 
 function Sidebar({ activeItem }: SidebarProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
 
   return (
     <aside className="sidebar">
-      <div className="brand">Meal Mate</div>
-      <nav>
+      <div className="sidebar-top-row">
+        <div className="brand">Meal Mate</div>
+        <button
+          type="button"
+          className="sidebar-toggle"
+          aria-label="Toggle navigation menu"
+          aria-expanded={isMenuOpen}
+          onClick={() => setIsMenuOpen((prev) => !prev)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+      </div>
+      <nav className={`sidebar-nav ${isMenuOpen ? "is-open" : ""}`}>
         <p className="nav-label">Overview</p>
         {NAV_ITEMS.map((item) => (
           <button
@@ -26,19 +45,14 @@ function Sidebar({ activeItem }: SidebarProps) {
             className={`nav-item ${activeItem === item.key ? "active" : ""}`}
             type="button"
             onClick={() => {
-              if (item.path) {
-                navigate(item.path);
-              }
+              navigate(item.path);
+              setIsMenuOpen(false);
             }}
           >
             {item.label}
           </button>
         ))}
       </nav>
-      <div className="sidebar-footer">
-        <p>Next run closes in</p>
-        <strong>22 min</strong>
-      </div>
     </aside>
   );
 }

@@ -1,5 +1,5 @@
 import { formatEuroPrice } from "../../helpers/currency";
-import type { MenuItem } from "../../components/homeTypes";
+import type { MenuItem } from "../../services/menu-item";
 import OrderSummaryCard from "../../components/orders/OrderSummaryCard";
 import type { OrderSummaryItem } from "../../components/orders/OrderSummaryCard";
 import { useEffect } from "react";
@@ -121,17 +121,18 @@ function RunDetailView({
         )}
       </div>
 
-      <label>
-        Note for the organizer (optional)
-        <textarea
+      <div className="order-note-inline">
+        <p className="section-label">Special notes</p>
+        <input
           id="order-note-input"
+          type="text"
+          aria-label="Special notes"
           placeholder="Add extra instructions or delivery notes"
-          rows={2}
           value={orderNote}
           onChange={(event) => onOrderNoteChange(event.target.value)}
           disabled={isLocked}
         />
-      </label>
+      </div>
 
       <OrderSummaryCard
         items={orderSummaryItems}

@@ -1,8 +1,8 @@
-import { Restaurant } from "../../components/homeTypes";
+import type { RestaurantEnriched } from "../../services/restaurant";
 import { RestaurantSelectionHandler } from "./types";
 
 type RestaurantListProps = {
-  restaurants: Restaurant[];
+  restaurants: RestaurantEnriched[];
   onSelect?: RestaurantSelectionHandler;
   emptyMessage?: string;
 };

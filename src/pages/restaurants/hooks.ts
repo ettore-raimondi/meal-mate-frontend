@@ -4,7 +4,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import type { Restaurant } from "../homeTypes";
+import type { RestaurantEnriched } from "../../services/restaurant";
 
 export type RestaurantCollection = "owned" | "nearby";
 
@@ -12,8 +12,8 @@ export const NEW_RESTAURANT_SLUG = "new";
 
 export function useRestaurantSelection(
   restaurantNumber: string | undefined,
-  restaurants: Restaurant[],
-  restaurantsNearMe: Restaurant[],
+  restaurants: RestaurantEnriched[],
+  restaurantsNearMe: RestaurantEnriched[],
 ) {
   const isCreatingRestaurant = restaurantNumber === NEW_RESTAURANT_SLUG;
   const viewingDetail = Boolean(restaurantNumber);
@@ -58,13 +58,13 @@ export function useRestaurantSelection(
 }
 
 export function useRestaurantCollections(
-  setRestaurants: Dispatch<SetStateAction<Restaurant[]>>,
-  setRestaurantsNearMe: Dispatch<SetStateAction<Restaurant[]>>,
+  setRestaurants: Dispatch<SetStateAction<RestaurantEnriched[]>>,
+  setRestaurantsNearMe: Dispatch<SetStateAction<RestaurantEnriched[]>>,
 ) {
   const mutate = useCallback(
     (
       collection: RestaurantCollection,
-      mutator: (list: Restaurant[]) => Restaurant[],
+      mutator: (list: RestaurantEnriched[]) => RestaurantEnriched[],
     ) => {
       const setter =
         collection === "owned" ? setRestaurants : setRestaurantsNearMe;
@@ -76,7 +76,7 @@ export function useRestaurantCollections(
   const addRestaurantToCollection = useCallback(
     (
       collection: RestaurantCollection,
-      restaurant: Restaurant,
+      restaurant: RestaurantEnriched,
       options: { prepend?: boolean } = {},
     ) => {
       const { prepend = true } = options;
@@ -91,7 +91,7 @@ export function useRestaurantCollections(
     (
       collection: RestaurantCollection,
       restaurantId: number,
-      updater: (restaurant: Restaurant) => Restaurant,
+      updater: (restaurant: RestaurantEnriched) => RestaurantEnriched,
     ) => {
       mutate(collection, (list) =>
         list.map((restaurant) =>
