@@ -38,7 +38,6 @@ function Sidebar({ activeItem }: SidebarProps) {
         </button>
       </div>
       <nav className={`sidebar-nav ${isMenuOpen ? "is-open" : ""}`}>
-        <p className="nav-label">Overview</p>
         {NAV_ITEMS.map((item) => (
           <button
             key={item.key}

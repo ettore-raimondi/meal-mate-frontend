@@ -40,10 +40,19 @@ export function mapToEnrichedOrder(
           status: run.status,
         }
       : undefined,
-    menuItems: restaurant.menuItems.map((item) => ({
-      id: item.id,
-      name: item.name,
-      price: Number(item.price).toFixed(2), // Ensure price is a string with 2 decimal places
-    })),
+    // Maps the menu item IDs in the order to their corresponding details from the restaurant's menu
+    menuItems: order.menuItems.map((menuItemId) => {
+      const item = restaurant.menuItems.find((m) => m.id === menuItemId);
+      if (!item) {
+        throw new Error(
+          `Menu item with ID ${menuItemId} not found in restaurant ${restaurant.id}`,
+        );
+      }
+      return {
+        id: item.id,
+        name: item.name,
+        price: Number(item.price).toFixed(2), // Ensure price is a string with 2 decimal places
+      };
+    }),
   };
 }

@@ -37,7 +37,7 @@ export const confirmToast = (
             type="button"
             className="confirm-toast-button"
             onClick={() => {
-              toast.dismiss(t.id);
+              toast.dismiss(t);
               resolve(false);
             }}
           >
@@ -47,7 +47,7 @@ export const confirmToast = (
             type="button"
             className="confirm-toast-button confirm"
             onClick={() => {
-              toast.dismiss(t.id);
+              toast.dismiss(t);
               resolve(true);
             }}
           >

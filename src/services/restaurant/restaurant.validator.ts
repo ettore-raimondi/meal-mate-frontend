@@ -1,12 +1,9 @@
-import type { RestaurantFormData } from "./types";
+import type { RestaurantFormData } from ".";
 
 export function validateNewRestaurant({
   name,
   address,
   phoneNumber,
-  websiteUrl,
-  description,
-  imageUrl,
 }: RestaurantFormData) {
   const errors: string[] = [];
 

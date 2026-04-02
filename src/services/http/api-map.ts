@@ -35,6 +35,16 @@ export type ApiEndpoints = {
       params: never;
     };
   };
+  "users/:id/": {
+    GET: {
+      response: unknown;
+      body: never;
+      params: never;
+      urlParams: {
+        id: string;
+      };
+    };
+  };
   "token/refresh/": {
     POST: {
       response: AuthResponseDTO;

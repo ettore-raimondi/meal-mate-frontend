@@ -1,16 +1,13 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import { Login, Signup } from "./features/auth";
 import { Toaster } from "sonner";
-import Dashboard from "./pages/dashboard/Dashboard";
-import Landing from "./pages/Landing";
-import Restaurants from "./pages/restaurants/Restaurants";
-import Orders from "./pages/Orders";
-import OrderDetail from "./pages/OrderDetail";
-import Runs from "./pages/run/Runs";
+import { Dashboard } from "./features/dashboard";
+import { Landing } from "./features/landing";
+import { Restaurants, useRestaurants } from "./features/restaurants";
+import { Orders, OrderDetail } from "./features/orders";
+import { Runs } from "./features/runs";
 import { AppContext } from "./context/AppContext";
-import { useRestaurants } from "./hooks/useRestaurants";
 
 function App() {
   const { restaurants } = useRestaurants();
