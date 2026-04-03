@@ -136,7 +136,7 @@ function Dashboard() {
     });
 
     toast.success(`Order #${order.id} has been placed.`);
-    navigate(`/orders/${order.id}`);
+    navigate(`/my-order-history/${order.id}`);
   };
 
   const closeMenuDetail = () => {

@@ -5,7 +5,7 @@ const NAV_ITEMS = [
   { key: "dashboard", label: "Dashboard", path: "/dashboard" },
   { key: "restaurants", label: "Restaurants", path: "/restaurants" },
   { key: "runs", label: "Runs", path: "/runs" },
-  { key: "orders", label: "Orders", path: "/orders" },
+  { key: "orders", label: "My Orders", path: "/my-order-history" },
 ];
 
 type SidebarProps = {

@@ -31,7 +31,7 @@ function OrderDetail() {
         .join(" ")
     : undefined;
 
-  const handleBack = () => navigate("/orders");
+  const handleBack = () => navigate("/my-order-history");
 
   return (
     <div className="dashboard">
@@ -41,7 +41,7 @@ function OrderDetail() {
           <div className="panel-head">
             <div className="panel-head-main">
               <button className="back-link" type="button" onClick={handleBack}>
-                ← Back to orders
+                ← Back to My Order History
               </button>
               <div className="panel-title-stack">
                 <div className="panel-title-row">

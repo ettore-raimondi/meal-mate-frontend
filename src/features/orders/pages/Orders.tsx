@@ -24,7 +24,7 @@ function Orders() {
             <div className="panel-head-main">
               <div className="panel-title-stack">
                 <div className="panel-title-row">
-                  <h2>Order History</h2>
+                  <h2>My Order History</h2>
                 </div>
                 <p className="panel-subtitle">
                   Review what you ordered and settle outstanding balances.
@@ -42,13 +42,13 @@ function Orders() {
                     <article
                       key={order.id}
                       className="list-card order-card"
-                      onClick={() => navigate(`/orders/${order.id}`)}
+                      onClick={() => navigate(`/my-order-history/${order.id}`)}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(event) => {
                         if (event.key === "Enter" || event.key === " ") {
                           event.preventDefault();
-                          navigate(`/orders/${order.id}`);
+                          navigate(`/my-order-history/${order.id}`);
                         }
                       }}
                     >
