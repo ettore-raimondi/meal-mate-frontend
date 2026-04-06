@@ -47,7 +47,7 @@ function RunDetailView({
         return;
       }
 
-      const order = await fetchLatestOrderForRun(activeRunId);
+      const order = await fetchLatestOrderForRun(activeRunId).catch(() => null);
 
       if (!order) {
         onOrderedItemsChange(new Set());

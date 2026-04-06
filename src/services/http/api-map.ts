@@ -213,9 +213,29 @@ export type ApiEndpoints = {
       params: never;
     };
   };
+  "orders/:id/": {
+    GET: {
+      response: OrderResponse;
+      body: never;
+      params: never;
+      urlParams: {
+        id: string;
+      };
+    };
+  };
   "orders/latest/:foodRunId/": {
     GET: {
       response: OrderResponse | null;
+      body: never;
+      params: never;
+      urlParams: {
+        foodRunId: string;
+      };
+    };
+  };
+  "orders/run/:foodRunId/": {
+    GET: {
+      response: OrderResponse[];
       body: never;
       params: never;
       urlParams: {

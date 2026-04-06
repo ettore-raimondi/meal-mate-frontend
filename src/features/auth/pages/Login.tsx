@@ -15,7 +15,7 @@ function Login() {
     localStorage.setItem("refreshToken", response.refresh);
     toast.success("Logged in successfully, redirecting...");
     setTimeout(() => {
-      navigate("/dashboard");
+      navigate("/place-order");
     }, 1000);
   };
 

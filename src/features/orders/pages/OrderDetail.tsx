@@ -1,20 +1,76 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
 import OrderSummaryCard from "../components/OrderSummaryCard";
 import type { OrderSummaryItem } from "../components/OrderSummaryCard";
-import { useOrders } from "../hooks/useOrders";
 import { getOrderStatusMeta } from "../utils/orderStatusMeta";
+import { fetchOrderById } from "../../../services/order/order.service";
+import { mapToEnrichedOrder } from "../../../services/order/order.mapper";
+import { fetchRuns } from "../../../services/run";
+import type { OrderEnriched } from "../../../services/order/order.types";
+import { useAppData } from "../../../hooks/useAppData";
 
 function OrderDetail() {
   const navigate = useNavigate();
-  const { enrichedOrders } = useOrders();
-  const { orderId: orderIdParam } = useParams<{ orderId: string }>();
+  const { restaurants, enrichedOrders } = useAppData();
+  const { orderId: orderIdParam } = useParams<{
+    orderId: string;
+  }>();
+  const [directOrder, setDirectOrder] = useState<OrderEnriched | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const parsedOrderId =
     orderIdParam !== undefined ? Number(orderIdParam) : undefined;
-  const order =
+
+  const existingOrder =
     parsedOrderId !== undefined && !Number.isNaN(parsedOrderId)
       ? enrichedOrders.find((entry) => entry.id === parsedOrderId)
       : undefined;
+  const order = existingOrder ?? directOrder ?? undefined;
+
+  useEffect(() => {
+    if (
+      parsedOrderId === undefined ||
+      Number.isNaN(parsedOrderId) ||
+      existingOrder !== undefined
+    ) {
+      setDirectOrder(null);
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+
+    (async () => {
+      try {
+        const [rawOrder, runs] = await Promise.all([
+          fetchOrderById(parsedOrderId),
+          fetchRuns(),
+        ]);
+        const restaurant = restaurants.find(
+          (entry) => entry.id === rawOrder.restaurantId,
+        );
+        const run = runs.find((entry) => entry.id === rawOrder.foodRun);
+
+        if (!cancelled && restaurant) {
+          setDirectOrder(mapToEnrichedOrder(rawOrder, restaurant, run));
+        }
+      } catch {
+        if (!cancelled) {
+          setDirectOrder(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [existingOrder, parsedOrderId, restaurants]);
+
   const statusMeta = getOrderStatusMeta(order?.status);
   const summaryItems: OrderSummaryItem[] = order
     ? order.menuItems.map((item) => ({
@@ -118,6 +174,10 @@ function OrderDetail() {
                     </div>
                   )}
                 </section>
+              ) : isLoading ? (
+                <div className="blank-state">
+                  <p className="muted-label">Loading order details...</p>
+                </div>
               ) : (
                 <div className="blank-state">
                   <p className="muted-label">

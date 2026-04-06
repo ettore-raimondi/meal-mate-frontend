@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const NAV_ITEMS = [
-  { key: "dashboard", label: "Dashboard", path: "/dashboard" },
+  { key: "dashboard", label: "Place Order", path: "/place-order" },
   { key: "restaurants", label: "Restaurants", path: "/restaurants" },
   { key: "runs", label: "Runs", path: "/runs" },
   { key: "orders", label: "My Orders", path: "/my-order-history" },

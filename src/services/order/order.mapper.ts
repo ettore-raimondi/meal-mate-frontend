@@ -8,6 +8,7 @@ export function mapToOrder(orderDTO: OrderResponse): Order {
     id: orderDTO.id,
     total: orderDTO.total,
     user: orderDTO.user,
+    userName: orderDTO.user_name,
     foodRun: orderDTO.food_run,
     menuItems: orderDTO.menu_items,
     note: orderDTO.note,

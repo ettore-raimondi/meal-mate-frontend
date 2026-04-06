@@ -10,6 +10,7 @@ export type OrderResponse = {
   id: number;
   total: number;
   user: number;
+  user_name: string;
   food_run: number;
   menu_items: number[];
   created_at: string;
@@ -24,6 +25,7 @@ export type Order = {
   id: number;
   total: number;
   user: number;
+  userName: string;
   foodRun: number;
   menuItems: number[];
   note: string;

@@ -1,17 +1,15 @@
-import { useEffect, useMemo, useState, useContext } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { formatEuroPrice } from "../../../helpers/currency";
 import MenuItemDetail from "../components/MenuItemDetail";
 import RunDetailView from "../components/RunDetailView";
 import RunList from "../components/RunList";
 import Sidebar from "../../../components/Sidebar";
-import { useRuns } from "../../runs/hooks";
-import { useOrders } from "../../orders/hooks/useOrders";
-import { AppContext } from "../../../context/AppContext";
 import type { RestaurantEnriched } from "../../../services/restaurant";
 import { getStatusMeta } from "../utils/runStatusMeta";
 import { createOrder } from "../../../services/order/order.service";
 import { toast } from "sonner";
+import { useAppData } from "../../../hooks/useAppData";
 
 type PanelView = "runs" | "runDetail" | "menuDetail";
 
@@ -35,9 +33,7 @@ const fromRouteMenuSegment = (segment?: string) => {
 };
 
 function Dashboard() {
-  const { restaurants } = useContext(AppContext);
-  const { enrichedRuns } = useRuns();
-  const { orders } = useOrders();
+  const { restaurants, enrichedRuns, orders } = useAppData();
   const [activeRunId, setActiveRunId] = useState<number | null>(null);
   const [activeItemId, setActiveItemId] = useState<number | null>(null);
   const [orderedItemIds, setOrderedItemIds] = useState<Set<number>>(new Set());
@@ -58,6 +54,11 @@ function Dashboard() {
     });
     return map;
   }, [restaurants]);
+
+  const activeRuns = useMemo(
+    () => enrichedRuns.filter((run) => run.status !== "COMPLETED"),
+    [enrichedRuns],
+  );
 
   const activeEnrichedRun = useMemo(
     () =>
@@ -86,11 +87,11 @@ function Dashboard() {
 
   const handleRunSelect = (id: number) => {
     setActiveRunId(id);
-    navigate(`/dashboard/run/${toRouteRunSegment(id)}`);
+    navigate(`/place-order/run/${toRouteRunSegment(id)}`);
   };
 
   const handleBackToRuns = () => {
-    navigate("/dashboard");
+    navigate("/place-order");
   };
 
   const handleCreateRun = () => {
@@ -104,7 +105,7 @@ function Dashboard() {
     }
     setActiveItemId(itemId);
     navigate(
-      `/dashboard/run/${toRouteRunSegment(targetRunId)}/menu-item/${toRouteMenuSegment(itemId)}`,
+      `/place-order/run/${toRouteRunSegment(targetRunId)}/menu-item/${toRouteMenuSegment(itemId)}`,
     );
   };
 
@@ -142,9 +143,9 @@ function Dashboard() {
   const closeMenuDetail = () => {
     const targetRunId = routeRunId ?? activeRunId ?? undefined;
     if (targetRunId !== undefined && targetRunId !== null) {
-      navigate(`/dashboard/run/${toRouteRunSegment(targetRunId)}`);
+      navigate(`/place-order/run/${toRouteRunSegment(targetRunId)}`);
     } else {
-      navigate("/dashboard");
+      navigate("/place-order");
     }
   };
 
@@ -155,7 +156,7 @@ function Dashboard() {
     if (panelView === "menuDetail" && activeMenuItem) {
       return activeMenuItem.name;
     }
-    return "Open Runs";
+    return "Place Order";
   })();
 
   const panelSubtitle = (() => {
@@ -168,7 +169,9 @@ function Dashboard() {
           `Organizer #${activeEnrichedRun.organizerId}`;
         parts.push(organizerLabel);
       }
-      return parts.length > 0 ? parts.join(" · ") : "Review the selected run";
+      return parts.length > 0
+        ? `${parts.join(" · ")} · Build your order for this run`
+        : "Build your order for the selected run";
     }
     if (panelView === "menuDetail" && activeMenuItem) {
       const restaurantLabel = runRestaurant ? `${runRestaurant.name}` : "";
@@ -177,7 +180,7 @@ function Dashboard() {
         ? `${restaurantLabel} · ${priceLabel}`
         : priceLabel;
     }
-    return "Track active runs and place orders.";
+    return "Choose a run to place or review your order.";
   })();
 
   const activeStatusMeta = getStatusMeta(activeEnrichedRun?.status);
@@ -205,7 +208,7 @@ function Dashboard() {
     if (runExists && activeRunId !== routeRunId) {
       setActiveRunId(routeRunId);
     } else if (!runExists) {
-      navigate("/dashboard", { replace: true });
+      navigate("/place-order", { replace: true });
     }
   }, [routeRunId, activeRunId, navigate, enrichedRuns]);
 
@@ -213,12 +216,12 @@ function Dashboard() {
     if (
       routeRunId !== undefined ||
       activeRunId !== null ||
-      enrichedRuns.length === 0
+      activeRuns.length === 0
     ) {
       return;
     }
-    setActiveRunId(enrichedRuns[0].id);
-  }, [routeRunId, activeRunId, enrichedRuns]);
+    setActiveRunId(activeRuns[0].id);
+  }, [routeRunId, activeRunId, activeRuns]);
 
   useEffect(() => {
     if (menuItems.length === 0) {
@@ -226,7 +229,7 @@ function Dashboard() {
         setActiveItemId(null);
       }
       if (routeMenuItemId !== undefined && routeRunId !== undefined) {
-        navigate(`/dashboard/run/${toRouteRunSegment(routeRunId)}`, {
+        navigate(`/place-order/run/${toRouteRunSegment(routeRunId)}`, {
           replace: true,
         });
       }
@@ -240,7 +243,7 @@ function Dashboard() {
           setActiveItemId(routeMenuItemId);
         }
       } else if (routeRunId !== undefined) {
-        navigate(`/dashboard/run/${toRouteRunSegment(routeRunId)}`, {
+        navigate(`/place-order/run/${toRouteRunSegment(routeRunId)}`, {
           replace: true,
         });
       }
@@ -300,7 +303,7 @@ function Dashboard() {
           <div className="runs-grid">
             {panelView === "runs" && (
               <RunList
-                runs={enrichedRuns}
+                runs={activeRuns}
                 activeRunId={effectiveRunId ?? null}
                 orderedRunIds={orderedRunIds}
                 onSelect={handleRunSelect}

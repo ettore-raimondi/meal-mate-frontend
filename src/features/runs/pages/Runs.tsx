@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
 import { CreateRunPanel, type RunFormData } from "..";
+import { RunViewPanel } from "..";
 import { createRun, completeRun, type RunStatus } from "../../../services/run";
-import { useRuns } from "../hooks/index.ts";
-import { useOrders } from "../../orders/hooks/useOrders";
 import { getDecodedToken } from "../../../services/auth";
 import { confirmToast } from "../../../components/toast/confirmToast";
 import { toast } from "sonner";
 import { getStatusMeta } from "../../dashboard/utils/runStatusMeta";
+import { useAppData } from "../../../hooks/useAppData";
 
 const STATUS_RANK: Record<RunStatus, number> = {
   IN_PROGRESS: 0,
@@ -23,16 +23,6 @@ const parseNumericParam = (value?: string) => {
   }
   const parsed = Number(value);
   return Number.isNaN(parsed) ? undefined : parsed;
-};
-
-const toDateTimeLocalValue = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 const formatDeadlineLabel = (deadline?: Date) => {
@@ -52,8 +42,7 @@ function Runs() {
   const location = useLocation();
   const { runId: runIdParam } = useParams<{ runId?: string }>();
   const routeRunId = parseNumericParam(runIdParam);
-  const { enrichedRuns, refetch } = useRuns();
-  const { orders } = useOrders();
+  const { enrichedRuns, orders, refetchRuns } = useAppData();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const isEditingRoute = routeRunId !== undefined;
@@ -165,7 +154,7 @@ function Runs() {
     setIsCompleting(true);
     try {
       await completeRun(activeRun.id);
-      await refetch();
+      await refetchRuns();
       toast.success("Run marked as completed.");
       navigate("/runs", { replace: true });
     } catch (error) {
@@ -176,36 +165,21 @@ function Runs() {
     }
   };
 
-  const editInitialValues = activeRun
-    ? {
-        id: activeRun.id,
-        name: activeRun.name,
-        restaurantId: activeRun.restaurant.id,
-        restaurantLabel: activeRun.restaurant.name,
-        deadline: toDateTimeLocalValue(activeRun.deadline),
-      }
-    : undefined;
-
-  const isPanelVisible = isCreateOpen || isEditingRoute;
-  const panelMode = isEditingRoute ? "edit" : "create";
-  const isRunLocked = panelMode === "edit" && activeRun?.status === "COMPLETED";
-  const disableCreateButton = isPanelVisible;
-  const shouldShowPanel =
-    isPanelVisible && (!isEditingRoute || Boolean(activeRun));
+  const isRunLocked = isEditingRoute && activeRun?.status === "COMPLETED";
+  const disableCreateButton = isCreateOpen || isEditingRoute;
 
   return (
     <div className="dashboard">
       <Sidebar activeItem="runs" />
       <div className="workspace">
-        {shouldShowPanel ? (
-          <CreateRunPanel
-            mode={panelMode}
-            initialValues={panelMode === "edit" ? editInitialValues : undefined}
+        {isEditingRoute && activeRun ? (
+          <RunViewPanel
+            run={activeRun}
             isLocked={isRunLocked}
             onSubmit={isRunLocked ? undefined : handleSubmitRun}
             onClose={handleClosePanel}
             actionSlot={
-              panelMode === "edit" && canCompleteRun ? (
+              canCompleteRun ? (
                 <button
                   type="button"
                   className="btn btn-success"
@@ -216,6 +190,12 @@ function Runs() {
                 </button>
               ) : undefined
             }
+          />
+        ) : isCreateOpen ? (
+          <CreateRunPanel
+            mode="create"
+            onSubmit={handleSubmitRun}
+            onClose={handleClosePanel}
           />
         ) : (
           <section className="panel runs-panel full-panel">

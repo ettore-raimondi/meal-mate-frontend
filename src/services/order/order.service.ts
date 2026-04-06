@@ -34,6 +34,15 @@ export async function fetchOrdersForUser(): Promise<Order[]> {
   return ordersDTO.map(mapToOrder);
 }
 
+export async function fetchOrderById(orderId: number): Promise<Order> {
+  const orderDTO = await httpClient("orders/:id/", {
+    method: "GET",
+    urlParams: { id: orderId.toString() },
+  });
+
+  return mapToOrder(orderDTO);
+}
+
 export async function fetchLatestOrderForRun(
   foodRunId: number,
 ): Promise<Order | null> {
@@ -47,4 +56,13 @@ export async function fetchLatestOrderForRun(
   }
 
   return mapToOrder(ordersDTO);
+}
+
+export async function fetchOrdersForRun(foodRunId: number): Promise<Order[]> {
+  const ordersDTO = await httpClient("orders/run/:foodRunId/", {
+    method: "GET",
+    urlParams: { foodRunId: foodRunId.toString() },
+  });
+
+  return ordersDTO.map(mapToOrder);
 }

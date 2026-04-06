@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
-import { useOrders } from "../hooks/useOrders";
 import { getOrderStatusMeta } from "../utils/orderStatusMeta";
+import { useAppData } from "../../../hooks/useAppData";
 
 function Orders() {
   const navigate = useNavigate();
-  const { enrichedOrders } = useOrders();
+  const { enrichedOrders } = useAppData();
   // const sortedOrders = [...orders].sort((a, b) => {
   //   const scoreA = ORDER_STATUS_RANK[a.status];
   //   const scoreB = ORDER_STATUS_RANK[b.status];

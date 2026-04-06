@@ -54,14 +54,29 @@ export async function signup({
   });
 }
 
-export function getAccessTokenWithRefreshToken(): Promise<AuthResponseDTO> {
+export async function getAccessTokenWithRefreshToken(): Promise<AuthResponseDTO> {
   const refreshToken = localStorage.getItem("refreshToken");
   if (!refreshToken) {
     return Promise.reject(new Error("No refresh token found"));
   }
 
-  return httpClient("token/refresh/", {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (!apiUrl) {
+    throw new Error("No api url provided, check your env file");
+  }
+
+  // Use raw fetch to avoid infinite recursion with httpClient
+  const response = await fetch(`${apiUrl}/token/refresh/`, {
     method: "POST",
-    body: { refresh: refreshToken },
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refresh: refreshToken }),
   });
+
+  if (!response.ok) {
+    throw new Error(`Token refresh failed with status ${response.status}`);
+  }
+
+  return response.json() as Promise<AuthResponseDTO>;
 }
