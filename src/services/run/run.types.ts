@@ -1,4 +1,4 @@
-export type RunStatus = "OPEN" | "CLOSED" | "IN_PROGRESS" | "COMPLETED";
+export type RunStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED";
 export type CreateRunPayload = {
   name: string;
   description?: string;

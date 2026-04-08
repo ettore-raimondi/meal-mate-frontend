@@ -11,6 +11,7 @@ type RunDetailViewProps = {
   activeItemId: number | null;
   orderedItemIds: Set<number>;
   isLocked?: boolean;
+  lockReason?: string;
   onSelectMenuItem: (itemId: number) => void;
   onToggleOrder: (itemId: number) => void;
   onPlaceOrder: () => void;
@@ -25,6 +26,7 @@ function RunDetailView({
   activeItemId,
   orderedItemIds,
   isLocked = false,
+  lockReason,
   onSelectMenuItem,
   onToggleOrder,
   onPlaceOrder,
@@ -138,7 +140,9 @@ function RunDetailView({
         items={orderSummaryItems}
         emptyMessage="No items added yet."
         action={{
-          label: isLocked ? "Run completed" : "Place order →",
+          label: isLocked
+            ? lockReason || "Cannot place order"
+            : "Place order →",
           onClick: onPlaceOrder,
           disabled: isLocked,
         }}

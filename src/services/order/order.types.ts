@@ -48,7 +48,7 @@ export type OrderEnriched = Omit<Order, "menuItems"> & {
     id: number;
     name: string;
     deadlineFormatted: string;
-    status: "OPEN" | "CLOSED" | "IN_PROGRESS" | "COMPLETED";
+    status: "OPEN" | "IN_PROGRESS" | "COMPLETED";
   };
   menuItems: {
     id: number;

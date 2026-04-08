@@ -10,7 +10,6 @@ type StatusMeta = {
 export const RUN_STATUS_META: Record<RunStatus, StatusMeta> = {
   OPEN: { label: "Open", tone: "info" },
   IN_PROGRESS: { label: "In progress", tone: "progress" },
-  CLOSED: { label: "Closed", tone: "muted" },
   COMPLETED: { label: "Completed", tone: "success" },
 };
 

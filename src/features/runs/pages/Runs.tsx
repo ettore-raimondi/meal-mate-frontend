@@ -11,10 +11,9 @@ import { getStatusMeta } from "../../dashboard/utils/runStatusMeta";
 import { useAppData } from "../../../hooks/useAppData";
 
 const STATUS_RANK: Record<RunStatus, number> = {
-  IN_PROGRESS: 0,
-  OPEN: 1,
-  CLOSED: 3,
-  COMPLETED: 4,
+  OPEN: 0,
+  IN_PROGRESS: 1,
+  COMPLETED: 2,
 };
 
 const parseNumericParam = (value?: string) => {

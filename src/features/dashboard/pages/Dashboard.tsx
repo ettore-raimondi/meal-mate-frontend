@@ -110,7 +110,7 @@ function Dashboard() {
   };
 
   const handleToggleOrder = (itemId: number) => {
-    if (isRunCompleted) {
+    if (!isRunEditable) {
       return;
     }
 
@@ -126,7 +126,7 @@ function Dashboard() {
   };
 
   const handlePlaceOrder = async () => {
-    if (isRunCompleted) {
+    if (!isRunEditable) {
       return;
     }
 
@@ -184,7 +184,41 @@ function Dashboard() {
   })();
 
   const activeStatusMeta = getStatusMeta(activeEnrichedRun?.status);
-  const isRunCompleted = activeEnrichedRun?.status === "COMPLETED";
+
+  const isDeadlinePassed = useMemo(() => {
+    if (!activeEnrichedRun?.deadline) {
+      return false;
+    }
+    const now = new Date();
+    return new Date(activeEnrichedRun.deadline) < now;
+  }, [activeEnrichedRun?.deadline]);
+
+  const isRunEditable = useMemo(() => {
+    if (!activeEnrichedRun) {
+      return false;
+    }
+    // Can only edit if run is OPEN and deadline hasn't passed
+    const isOpen = activeEnrichedRun.status === "OPEN";
+    return isOpen && !isDeadlinePassed;
+  }, [activeEnrichedRun, isDeadlinePassed]);
+
+  const lockReason = useMemo(() => {
+    // Determine why the run is locked for editing (if applicable)
+    if (!activeEnrichedRun) {
+      return undefined;
+    }
+    if (activeEnrichedRun.status === "IN_PROGRESS") {
+      return "Run in progress";
+    }
+    if (activeEnrichedRun.status === "COMPLETED") {
+      return "Run completed";
+    }
+    if (isDeadlinePassed) {
+      return "Deadline has passed";
+    }
+    return undefined;
+  }, [activeEnrichedRun, isDeadlinePassed]);
+
   const orderedRunIds = useMemo(
     () => new Set(orders.map((order) => order.foodRun)),
     [orders],
@@ -316,7 +350,7 @@ function Dashboard() {
                   <MenuItemDetail
                     menuItem={activeMenuItem}
                     actionSlot={
-                      isRunCompleted ? undefined : (
+                      !isRunEditable ? undefined : (
                         <button
                           className={`btn ${
                             orderedItemIds.has(activeMenuItem.id)
@@ -345,7 +379,8 @@ function Dashboard() {
                     orderNote={orderNote}
                     onOrderNoteChange={setOrderNote}
                     onOrderedItemsChange={setOrderedItemIds}
-                    isLocked={isRunCompleted}
+                    isLocked={!isRunEditable}
+                    lockReason={lockReason}
                   />
                 )}
               </div>

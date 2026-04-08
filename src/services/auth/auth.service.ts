@@ -80,3 +80,8 @@ export async function getAccessTokenWithRefreshToken(): Promise<AuthResponseDTO>
 
   return response.json() as Promise<AuthResponseDTO>;
 }
+
+export function logout(): void {
+  localStorage.removeItem("token");
+  localStorage.removeItem("refreshToken");
+}

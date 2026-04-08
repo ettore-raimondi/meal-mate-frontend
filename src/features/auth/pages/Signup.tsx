@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { signup } from "../../../services/auth/auth.service";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 function Signup() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -50,6 +52,7 @@ function Signup() {
       password: formData.password,
     });
     toast.success("Account created successfully! Please log in.");
+    navigate("/login");
   };
 
   return (
@@ -61,9 +64,9 @@ function Signup() {
           <p>Invite teammates and manage food runs together.</p>
         </header>
 
-        <form>
-          <div className="two-column">
-            <div>
+        <form className="auth-form">
+          <div className="auth-field-grid">
+            <div className="auth-field">
               <label htmlFor="firstName">First name</label>
               <input
                 id="firstName"
@@ -72,11 +75,11 @@ function Signup() {
                 minLength={2}
                 value={formData.firstName}
                 onChange={handleChange}
-                placeholder="Jane"
+                placeholder="John"
                 required
               />
             </div>
-            <div>
+            <div className="auth-field">
               <label htmlFor="lastName">Last name</label>
               <input
                 id="lastName"
@@ -91,40 +94,46 @@ function Signup() {
             </div>
           </div>
 
-          <label htmlFor="email">Work email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="you@company.com"
-            required
-          />
+          <div className="auth-field">
+            <label htmlFor="email">Work email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="you@company.com"
+              required
+            />
+          </div>
 
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            minLength={4}
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="••••••••"
-            required
-          />
+          <div className="auth-field">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              minLength={4}
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+          </div>
 
-          <label htmlFor="confirmPassword">Confirm password</label>
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            minLength={4}
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            placeholder="••••••••"
-            required
-          />
+          <div className="auth-field">
+            <label htmlFor="confirmPassword">Confirm password</label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              minLength={4}
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+          </div>
 
           <button
             className="btn btn-large"

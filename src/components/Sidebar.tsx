@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { logout } from "../services/auth";
 
 const NAV_ITEMS = [
   { key: "dashboard", label: "Place Order", path: "/place-order" },
@@ -51,6 +52,17 @@ function Sidebar({ activeItem }: SidebarProps) {
             {item.label}
           </button>
         ))}
+        <button
+          type="button"
+          className="nav-item nav-item-logout"
+          onClick={() => {
+            logout();
+            navigate("/login", { replace: true });
+            setIsMenuOpen(false);
+          }}
+        >
+          Log out
+        </button>
       </nav>
     </aside>
   );
