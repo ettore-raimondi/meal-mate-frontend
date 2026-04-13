@@ -11,13 +11,13 @@ const toUpdatePayload = ({ clientState, imageUrl, ...item }: MenuItem) => ({
 });
 
 export async function scrapeMenuItems(websiteUrl: string): Promise<MenuItem[]> {
-  // TODO: validate websiteUrl before sending request
-  return httpClient("menu_items/scrape/", {
+  const menuItemsDTO = await httpClient("menu_items/scrape/", {
     method: "GET",
     params: {
       restaurant_website_url: websiteUrl,
     },
   });
+  return mapToMenuItems(menuItemsDTO);
 }
 
 export async function getMenuItemsForRestaurant(

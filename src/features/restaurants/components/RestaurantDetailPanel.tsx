@@ -246,13 +246,15 @@ function ExistingRestaurantView({
               onChange={onRestaurantFormChange}
             />
           </form>
-          <button
-            className="btn btn-outline restaurant-menu-toggle"
-            type="button"
-            onClick={() => setShowingMenuView(true)}
-          >
-            Edit menu items →
-          </button>
+          {!isNearbyRestaurantDetail && (
+            <button
+              className="btn btn-outline restaurant-menu-toggle"
+              type="button"
+              onClick={() => setShowingMenuView(true)}
+            >
+              Edit menu items →
+            </button>
+          )}
         </>
       )}
 
@@ -281,17 +283,17 @@ function ExistingRestaurantView({
             </button>
           )}
         </div>
-        <div className="restaurant-meta-actions-danger">
-          <button
-            className="btn btn-outline btn-danger"
-            type="button"
-            onClick={onDeleteRestaurant}
-          >
-            {isNearbyRestaurantDetail
-              ? "Remove suggestion"
-              : "Delete restaurant"}
-          </button>
-        </div>
+        {!isNearbyRestaurantDetail && (
+          <div className="restaurant-meta-actions-danger">
+            <button
+              className="btn btn-outline btn-danger"
+              type="button"
+              onClick={onDeleteRestaurant}
+            >
+              Delete restaurant
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -292,6 +292,31 @@ function Dashboard() {
     }
   }, [menuItems, routeMenuItemId, routeRunId, navigate, activeItemId]);
 
+  function renderRunsList() {
+    if (panelView === "runs") {
+      if (activeRuns.length === 0) {
+        return (
+          <div className="blank-state">
+            <p className="muted-label">
+              No active runs available. Add one or wait for a new run to start.
+            </p>
+          </div>
+        );
+      }
+
+      return (
+        <RunList
+          runs={activeRuns}
+          activeRunId={effectiveRunId ?? null}
+          orderedRunIds={orderedRunIds}
+          onSelect={handleRunSelect}
+        />
+      );
+    }
+
+    return null;
+  }
+
   return (
     <div className="dashboard">
       <Sidebar activeItem="dashboard" />
@@ -335,14 +360,7 @@ function Dashboard() {
           </div>
 
           <div className="runs-grid">
-            {panelView === "runs" && (
-              <RunList
-                runs={activeRuns}
-                activeRunId={effectiveRunId ?? null}
-                orderedRunIds={orderedRunIds}
-                onSelect={handleRunSelect}
-              />
-            )}
+            {renderRunsList()}
 
             {panelView !== "runs" && (
               <div className="run-detail scrollable">

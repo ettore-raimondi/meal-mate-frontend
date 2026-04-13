@@ -245,8 +245,31 @@ function Restaurants() {
   };
 
   const handleScrapeMenuItems = async (websiteUrl: string) => {
-    const menuItems = await scrapeMenuItems(websiteUrl);
-    console.log("Scraped menu items:", menuItems);
+    if (!websiteUrl) {
+      toast.error("Enter the restaurant's website URL to scrape menu items.");
+      return;
+    }
+
+    try {
+      const menuItems = await scrapeMenuItems(websiteUrl);
+      if (!menuItems.length) {
+        toast.error(
+          "Couldn't find any menu items on the website for this restaurant.",
+        );
+        return;
+      }
+
+      updateMenuItems((prev) => [
+        ...menuItems.map((item) => ({ ...item, clientState: "new" as const })),
+        ...prev,
+      ]);
+
+      setShowingMenuView(true);
+      toast.success("Scraped menu items added. Review and save your changes.");
+    } catch (error) {
+      console.error("Failed to scrape menu items:", error);
+      toast.error("Menu scraping failed. Please try again.");
+    }
   };
 
   const handleRestaurantFormChange = (
