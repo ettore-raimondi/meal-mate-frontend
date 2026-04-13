@@ -3,11 +3,11 @@ import type { MenuItemResponse } from "./menu-item.types";
 import { httpClient } from "../http";
 import { mapToMenuItems } from "./menu-item.mapper";
 
-const normalizePrice = (price: MenuItem["price"]): string => {
-  if (typeof price !== "string") {
-    return "0";
-  }
-
+// Normalises a user-typed price string into a plain numeric string.
+// By the time scraped/fetched items reach here they are already clean strings
+// (converted from FloatField numbers in the mapper), so this only needs to
+// handle user input edge-cases: empty field → "0", European comma decimals.
+const normalizePrice = (price: string): string => {
   const trimmed = price.trim();
   if (!trimmed) {
     return "0";
@@ -16,11 +16,7 @@ const normalizePrice = (price: MenuItem["price"]): string => {
   const normalized = trimmed.replace(",", ".").replace(/[^0-9.\-]/g, "");
   const asNumber = Number.parseFloat(normalized);
 
-  if (Number.isNaN(asNumber)) {
-    return "0";
-  }
-
-  return asNumber.toString();
+  return Number.isNaN(asNumber) ? "0" : asNumber.toString();
 };
 
 const toCreatePayload = ({ clientState, id, imageUrl, ...rest }: MenuItem) => {

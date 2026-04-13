@@ -5,7 +5,7 @@ export function mapToMenuItems(menuItems: MenuItemResponse[]): MenuItem[] {
   return menuItems.map((item) => ({
     id: item.id,
     name: item.name,
-    price: item.price,
+    price: item.price.toString(),
     description: item.description,
     imageUrl: item.image_url,
   }));

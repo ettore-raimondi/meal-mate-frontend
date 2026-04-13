@@ -1,7 +1,7 @@
 export type MenuItemResponse = {
   id: number;
   name: string;
-  price: string;
+  price: number;
   description: string;
   image_url?: string;
 };
