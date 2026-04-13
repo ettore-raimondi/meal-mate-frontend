@@ -2,7 +2,7 @@ import { formatEuroPrice } from "../../../helpers/currency";
 import type { MenuItem } from "../../../services/menu-item";
 import OrderSummaryCard from "../../orders/components/OrderSummaryCard";
 import type { OrderSummaryItem } from "../../orders/components/OrderSummaryCard";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { fetchLatestOrderForRun } from "../../../services/order/order.service";
 
 type RunDetailViewProps = {
@@ -10,6 +10,7 @@ type RunDetailViewProps = {
   activeRunId?: number;
   activeItemId: number | null;
   orderedItemIds: Set<number>;
+  actionLabel?: string;
   isLocked?: boolean;
   lockReason?: string;
   onSelectMenuItem: (itemId: number) => void;
@@ -25,6 +26,7 @@ function RunDetailView({
   activeRunId,
   activeItemId,
   orderedItemIds,
+  actionLabel,
   isLocked = false,
   lockReason,
   onSelectMenuItem,
@@ -34,6 +36,19 @@ function RunDetailView({
   onOrderNoteChange,
   onOrderedItemsChange,
 }: RunDetailViewProps) {
+  const sortedMenuItems = useMemo(() => {
+    return [...menuItems].sort((leftItem, rightItem) => {
+      const leftIsOrdered = orderedItemIds.has(leftItem.id);
+      const rightIsOrdered = orderedItemIds.has(rightItem.id);
+
+      if (leftIsOrdered === rightIsOrdered) {
+        return 0;
+      }
+
+      return leftIsOrdered ? -1 : 1;
+    });
+  }, [menuItems, orderedItemIds]);
+
   const orderedItems = menuItems.filter((item) => orderedItemIds.has(item.id));
   const orderSummaryItems: OrderSummaryItem[] = orderedItems.map((item) => ({
     id: item.id,
@@ -74,8 +89,8 @@ function RunDetailView({
       </div>
 
       <div className="menu-grid">
-        {menuItems.length > 0 ? (
-          menuItems.map((item) => (
+        {sortedMenuItems.length > 0 ? (
+          sortedMenuItems.map((item) => (
             <article
               key={`${activeRunId ?? "run"}-${item.id}`}
               className={`menu-card list-card list-card--inline ${item.id === activeItemId ? "is-active" : ""}`}
@@ -142,7 +157,7 @@ function RunDetailView({
         action={{
           label: isLocked
             ? lockReason || "Cannot place order"
-            : "Place order →",
+            : actionLabel || "Place order →",
           onClick: onPlaceOrder,
           disabled: isLocked,
         }}

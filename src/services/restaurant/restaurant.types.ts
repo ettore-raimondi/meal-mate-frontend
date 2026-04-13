@@ -9,7 +9,6 @@ export type RestaurantDTO = {
   phone_number: string;
   website_url: string;
   description: string;
-  cuisine: string;
   menu_items?: MenuItemResponse[];
 };
 
@@ -23,7 +22,6 @@ export type Restaurant = {
   phoneNumber: string;
   websiteUrl: string;
   description: string;
-  cuisine: string;
   menuItems: MenuItem[];
 };
 

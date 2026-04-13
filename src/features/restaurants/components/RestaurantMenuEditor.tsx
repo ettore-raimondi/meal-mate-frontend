@@ -52,8 +52,7 @@ function RestaurantMenuEditor({
             <input
               value={draft.price}
               onChange={(event) => onChange("price", event.target.value)}
-              placeholder="€12.00"
-              required
+              placeholder="€12.00 (optional)"
             />
           </label>
         </div>

@@ -50,7 +50,7 @@ export async function signup({
 }): Promise<AuthResponseDTO> {
   return httpClient("users/", {
     method: "POST",
-    body: { firstName, lastName, email, password },
+    body: { first_name: firstName, last_name: lastName, email, password },
   });
 }
 

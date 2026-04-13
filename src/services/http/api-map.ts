@@ -7,6 +7,7 @@ import type {
 import type { OrderRequestPayload, OrderResponse } from "../order/order.types";
 import type { RestaurantDTO } from "../restaurant";
 import type { RunResponse, RunStatus } from "../run/run.types";
+import type { UserDTO } from "../user";
 
 /**
  * This type defines the structure of the API endpoints used in the application.
@@ -27,8 +28,8 @@ export type ApiEndpoints = {
     POST: {
       response: AuthResponseDTO;
       body: {
-        firstName: string;
-        lastName: string;
+        first_name: string;
+        last_name: string;
         email: string;
         password: string;
       };
@@ -37,7 +38,7 @@ export type ApiEndpoints = {
   };
   "users/:id/": {
     GET: {
-      response: unknown;
+      response: UserDTO;
       body: never;
       params: never;
       urlParams: {
@@ -217,6 +218,14 @@ export type ApiEndpoints = {
     GET: {
       response: OrderResponse;
       body: never;
+      params: never;
+      urlParams: {
+        id: string;
+      };
+    };
+    PATCH: {
+      response: OrderResponse;
+      body: Partial<OrderRequestPayload>;
       params: never;
       urlParams: {
         id: string;

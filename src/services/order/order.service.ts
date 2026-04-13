@@ -26,6 +26,27 @@ export async function createOrder({
   return mapToOrder(orderDTO);
 }
 
+export async function updateOrder({
+  orderId,
+  menuItems,
+  note,
+}: {
+  orderId: number;
+  menuItems: number[];
+  note?: string;
+}): Promise<Order> {
+  const orderDTO = await httpClient("orders/:id/", {
+    method: "PATCH",
+    urlParams: { id: orderId.toString() },
+    body: {
+      menu_items: menuItems,
+      note,
+    },
+  });
+
+  return mapToOrder(orderDTO);
+}
+
 export async function fetchOrdersForUser(): Promise<Order[]> {
   const ordersDTO = await httpClient("orders/", {
     method: "GET",

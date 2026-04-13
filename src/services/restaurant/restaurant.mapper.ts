@@ -12,7 +12,6 @@ export function mapToRestaurants(restaurants: RestaurantDTO[]) {
     phoneNumber: restaurant.phone_number,
     websiteUrl: restaurant.website_url,
     description: restaurant.description,
-    cuisine: restaurant.cuisine,
     menuItems: mapToMenuItems(restaurant.menu_items || []),
   }));
 }

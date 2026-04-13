@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import RunFormField from "./RunFormField";
 import type {
   RestaurantOption,
@@ -16,6 +16,7 @@ type CreateRunFormProps = {
   initialValues?: RunInitialValues;
   onSubmit?: (payload: RunFormData) => Promise<void> | void;
   onCancel?: () => void;
+  actionSlot?: ReactNode;
 };
 
 const INITIAL_FORM_STATE: RunFormValues = {
@@ -42,6 +43,7 @@ function CreateRunForm({
   initialValues,
   onSubmit,
   onCancel,
+  actionSlot,
 }: CreateRunFormProps) {
   const [formState, setFormState] = useState<RunFormValues>(INITIAL_FORM_STATE);
   const [touched, setTouched] = useState(INITIAL_TOUCHED_STATE);
@@ -60,13 +62,36 @@ function CreateRunForm({
     setTouched(INITIAL_TOUCHED_STATE);
   }, [initialValues]);
 
+  useEffect(() => {
+    if (mode !== "create") {
+      return;
+    }
+    if (restaurants.length === 0) {
+      return;
+    }
+    if (formState.restaurantId !== 0) {
+      return;
+    }
+
+    setFormState((prev) => ({ ...prev, restaurantId: restaurants[0].id }));
+  }, [formState.restaurantId, mode, restaurants]);
+
+  const findRestaurantName = (restaurantId: number) => {
+    const match = restaurants.find(
+      (restaurant) => restaurant.id === restaurantId,
+    );
+    return match ? match.label : null;
+  };
+
   const errors: FormErrors = useMemo(
     () => ({
       name: formState.name ? "" : "Give this run a friendly name.",
-      restaurantId: formState.restaurantId ? "" : "Select a restaurant.",
+      restaurantId: findRestaurantName(formState.restaurantId)
+        ? ""
+        : "Select a restaurant.",
       deadline: formState.deadline ? "" : "Add a cutoff time.",
     }),
-    [formState],
+    [findRestaurantName, formState],
   );
 
   const isValid = useMemo(
@@ -80,19 +105,6 @@ function CreateRunForm({
 
   const handleChange = (field: FormFieldKey, value: string | number) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const findRestaurantName = (restaurantId: number) => {
-    const match = restaurants.find(
-      (restaurant) => restaurant.id === restaurantId,
-    );
-    if (match) {
-      return match.label;
-    }
-    if (initialValues?.restaurantId === restaurantId) {
-      return initialValues?.restaurantLabel ?? "";
-    }
-    return "";
   };
 
   const getErrorForField = (field: FormFieldKey) => {
@@ -141,6 +153,9 @@ function CreateRunForm({
   const submitDisabled = !isValid || isSubmitting || selectDisabled || isLocked;
   const submitLabel = mode === "create" ? "Create run" : "Save changes";
   const submittingLabel = mode === "create" ? "Creating..." : "Saving...";
+  const showActions =
+    !isLocked &&
+    (Boolean(onSubmit) || Boolean(onCancel) || Boolean(actionSlot));
 
   return (
     <form onSubmit={handleSubmit} noValidate>
@@ -177,9 +192,13 @@ function CreateRunForm({
           id="run-restaurant"
           name="restaurant"
           value={formState.restaurantId}
-          onChange={(event) =>
-            handleChange("restaurantId", Number(event.target.value))
-          }
+          onChange={(event) => {
+            const parsedRestaurantId = Number.parseInt(event.target.value, 10);
+            handleChange(
+              "restaurantId",
+              Number.isNaN(parsedRestaurantId) ? 0 : parsedRestaurantId,
+            );
+          }}
           onBlur={() => handleBlur("restaurantId")}
           disabled={selectDisabled || isLocked}
         >
@@ -204,7 +223,7 @@ function CreateRunForm({
       <RunFormField
         id="run-deadline"
         label="Order deadline"
-        helperText="We will send nudges 15 minutes before this cutoff."
+        helperText="Orders cannot be placed or edited after this time. Set it at least 30 minutes in the future to give everyone enough time to order."
         error={getErrorForField("deadline")}
       >
         <input
@@ -218,16 +237,36 @@ function CreateRunForm({
         />
       </RunFormField>
 
-      <div className="create-run-actions">
-        <button className="btn" type="submit" disabled={submitDisabled}>
-          {isSubmitting ? submittingLabel : submitLabel}
-        </button>
-        {onCancel ? (
-          <button className="btn btn-ghost" type="button" onClick={onCancel}>
-            Cancel
+      {mode === "edit" && initialValues?.organizerName ? (
+        <RunFormField
+          id="run-organizer"
+          label="Organizer"
+          helperText="Only the organizer can edit this run. You are the owner."
+        >
+          <input
+            id="run-organizer"
+            name="organizer"
+            type="text"
+            value={initialValues.organizerName}
+            readOnly
+            disabled
+          />
+        </RunFormField>
+      ) : null}
+
+      {showActions ? (
+        <div className="create-run-actions">
+          <button className="btn" type="submit" disabled={submitDisabled}>
+            {isSubmitting ? submittingLabel : submitLabel}
           </button>
-        ) : null}
-      </div>
+          {onCancel ? (
+            <button className="btn btn-ghost" type="button" onClick={onCancel}>
+              Cancel
+            </button>
+          ) : null}
+          {actionSlot}
+        </div>
+      ) : null}
     </form>
   );
 }

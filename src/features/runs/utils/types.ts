@@ -15,6 +15,7 @@ export type RunFormValues = {
 export type RunInitialValues = RunFormValues & {
   id?: number;
   restaurantLabel?: string;
+  organizerName?: string;
 };
 
 export type RestaurantOption = {

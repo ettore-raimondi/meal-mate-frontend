@@ -7,7 +7,11 @@ import RunList from "../components/RunList";
 import Sidebar from "../../../components/Sidebar";
 import type { RestaurantEnriched } from "../../../services/restaurant";
 import { getStatusMeta } from "../utils/runStatusMeta";
-import { createOrder } from "../../../services/order/order.service";
+import {
+  createOrder,
+  fetchLatestOrderForRun,
+  updateOrder,
+} from "../../../services/order/order.service";
 import { toast } from "sonner";
 import { useAppData } from "../../../hooks/useAppData";
 
@@ -130,13 +134,25 @@ function Dashboard() {
       return;
     }
 
-    const order = await createOrder({
-      foodRun: activeRunId!,
-      menuItems: Array.from(orderedItemIds),
-      note: orderNote,
-    });
+    const selectedMenuItems = Array.from(orderedItemIds);
+    const latestOrder = await fetchLatestOrderForRun(activeRunId!).catch(
+      () => null,
+    );
 
-    toast.success(`Order #${order.id} has been placed.`);
+    const order =
+      latestOrder && latestOrder.status === "in_progress"
+        ? await updateOrder({
+            orderId: latestOrder.id,
+            menuItems: selectedMenuItems,
+            note: orderNote,
+          })
+        : await createOrder({
+            foodRun: activeRunId!,
+            menuItems: selectedMenuItems,
+            note: orderNote,
+          });
+
+    toast.success(`Order #${order.id} has been saved.`);
     navigate(`/my-order-history/${order.id}`);
   };
 
@@ -223,6 +239,17 @@ function Dashboard() {
     () => new Set(orders.map((order) => order.foodRun)),
     [orders],
   );
+
+  const hasExistingOrderForActiveRun = useMemo(() => {
+    if (!activeEnrichedRun) {
+      return false;
+    }
+
+    return orders.some(
+      (order) =>
+        order.foodRun === activeEnrichedRun.id && order.status !== "cancelled",
+    );
+  }, [activeEnrichedRun, orders]);
 
   const backButton = (() => {
     if (panelView === "runDetail") {
@@ -391,6 +418,11 @@ function Dashboard() {
                     activeRunId={activeEnrichedRun?.id}
                     activeItemId={effectiveMenuItemId ?? null}
                     orderedItemIds={orderedItemIds}
+                    actionLabel={
+                      hasExistingOrderForActiveRun
+                        ? "Update order →"
+                        : "Place order →"
+                    }
                     onSelectMenuItem={openMenuDetail}
                     onToggleOrder={handleToggleOrder}
                     onPlaceOrder={handlePlaceOrder}

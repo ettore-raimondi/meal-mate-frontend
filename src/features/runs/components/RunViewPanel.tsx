@@ -51,6 +51,7 @@ function RunViewPanel({
       name: run.name,
       restaurantId: run.restaurant.id,
       restaurantLabel: run.restaurant.name,
+      organizerName: run.organizerName,
       deadline: toDateTimeLocalValue(run.deadline),
     }),
     [run],
@@ -96,7 +97,6 @@ function RunViewPanel({
             <p className="panel-subtitle">{run.restaurant.name}</p>
           </div>
         </div>
-        {actionSlot ? <div className="panel-actions">{actionSlot}</div> : null}
       </div>
 
       <div className="run-detail-tabs" role="tablist" aria-label="Run sections">
@@ -123,19 +123,21 @@ function RunViewPanel({
         </button>
       </div>
 
-      {activeTab === "details" && (
-        <RunDetailFormTab
-          mode="edit"
-          initialValues={initialValues}
-          isLocked={isLocked}
-          onSubmit={handleSubmit}
-          onCancel={onClose}
-        />
-      )}
-      {activeTab === "summary" && (
-        <RunOrderSummaryTab runOrders={runOrders} menuItems={menuItems} />
-      )}
-      {activeTab === "orders" && <RunOrdersTab runOrders={runOrders} />}
+      <div className="run-detail-content">
+        {activeTab === "details" && (
+          <RunDetailFormTab
+            mode="edit"
+            initialValues={initialValues}
+            isLocked={isLocked}
+            onSubmit={handleSubmit}
+            actionSlot={actionSlot}
+          />
+        )}
+        {activeTab === "summary" && (
+          <RunOrderSummaryTab runOrders={runOrders} menuItems={menuItems} />
+        )}
+        {activeTab === "orders" && <RunOrdersTab runOrders={runOrders} />}
+      </div>
     </section>
   );
 }

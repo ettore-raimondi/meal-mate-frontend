@@ -30,7 +30,6 @@ function RestaurantList({
             <div className="run-card-head">
               <h3>{restaurant.name}</h3>
             </div>
-            <p>{restaurant.cuisine}</p>
             <div className="run-meta">
               <span>{restaurant.address}</span>
             </div>

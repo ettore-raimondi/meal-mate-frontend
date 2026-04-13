@@ -36,6 +36,25 @@ export async function fetchRuns() {
   return mapRunResponseToRuns(runs);
 }
 
+export async function updateRun(
+  runId: number,
+  { name, description, restaurant_id, deadline, status }: CreateRunPayload,
+) {
+  const updatedRun = await httpClient("food_runs/:id/", {
+    method: "PATCH",
+    urlParams: { id: runId.toString() },
+    body: {
+      name,
+      description,
+      restaurant: restaurant_id,
+      deadline,
+      status,
+    },
+  });
+
+  return mapRunResponseToRuns([updatedRun])[0];
+}
+
 export async function completeRun(runId: number) {
   const updatedRun = await httpClient("food_runs/:id/", {
     method: "PATCH",

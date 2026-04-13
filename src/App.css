@@ -83,6 +83,10 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+}
+
 .btn {
   padding: 0.55rem 1rem;
   border-radius: 999px;
@@ -275,6 +279,7 @@ a:hover {
 
 .sidebar-nav {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 0.35rem;
 }
@@ -343,13 +348,49 @@ a:hover {
   margin-top: auto;
   padding: 1rem;
   border-radius: 12px;
-  background: rgba(124, 58, 237, 0.1);
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
 }
 
-.sidebar-footer strong {
-  display: block;
-  font-size: 1.5rem;
-  margin-top: 0.35rem;
+.sidebar-footer-label {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sidebar-footer-name {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f1d2b;
+}
+
+.sidebar-footer-email {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.sidebar-footer-logout {
+  margin-top: 0.75rem;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(185, 28, 28, 0.3);
+  background: transparent;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.sidebar-footer-logout:hover {
+  background: rgba(185, 28, 28, 0.08);
 }
 
 .workspace {
@@ -950,6 +991,7 @@ a:hover {
   display: block;
   width: 100%;
   text-align: left;
+  cursor: pointer;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -1282,10 +1324,15 @@ a:hover {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .create-run-panel form {
   margin-top: 0.5rem;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .form-field {
@@ -1468,6 +1515,13 @@ select:focus {
   gap: 0.6rem;
 }
 
+.run-detail-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
 .run-detail-tab {
   padding: 0.55rem 0.9rem;
   border-radius: 999px;
@@ -1482,6 +1536,14 @@ select:focus {
   background: linear-gradient(120deg, var(--primary), #a855f7);
   border-color: transparent;
   color: #fff;
+}
+
+.create-run-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 1rem;
 }
 
 .menu-section {
@@ -1693,7 +1755,7 @@ select:focus {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 1024px) {
   .sidebar {
     gap: 0.6rem;
   }

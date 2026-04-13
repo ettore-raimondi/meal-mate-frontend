@@ -155,7 +155,7 @@ function Restaurants() {
     : viewingDetail && activeRestaurant && !isEditingMenu
       ? isNearbyRestaurantDetail
         ? `${activeRestaurant.address} · Suggested nearby kitchen`
-        : `${activeRestaurant.address} · ${activeRestaurant.cuisine}`
+        : `${activeRestaurant.address} · ${activeRestaurant.menuItems?.length ?? 0} menu items`
       : "Browse all partner kitchens.";
 
   const handleSelectRestaurant = async (restaurantId: number) => {
@@ -325,9 +325,11 @@ function Restaurants() {
 
   const handleMenuEditorSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!menuEditor.name || !menuEditor.price || !menuEditorMode) {
+    if (!menuEditor.name || !menuEditorMode) {
       return;
     }
+
+    const normalizedPrice = menuEditor.price.trim() || "0";
 
     if (menuEditorMode.type === "edit") {
       const targetId = menuEditorMode.itemId;
@@ -338,7 +340,12 @@ function Restaurants() {
           }
           const nextClientState =
             item.clientState === "new" ? "new" : "toUpdate";
-          return { ...item, ...menuEditor, clientState: nextClientState };
+          return {
+            ...item,
+            ...menuEditor,
+            price: normalizedPrice,
+            clientState: nextClientState,
+          };
         }),
       );
       cancelMenuEditor();
@@ -348,7 +355,7 @@ function Restaurants() {
     const newItem: MenuItem = {
       id: generateMenuItemTempId(),
       name: menuEditor.name,
-      price: menuEditor.price,
+      price: normalizedPrice,
       description: menuEditor.description,
       imageUrl: menuEditor.imageUrl,
       clientState: "new",

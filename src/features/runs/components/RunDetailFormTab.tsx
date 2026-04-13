@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import type { ReactNode } from "react";
 import type { RestaurantEnriched } from "../../../services/restaurant";
 import { useRestaurants } from "../../restaurants/hooks";
 import CreateRunForm from "./CreateRunForm";
@@ -14,6 +15,7 @@ type RunDetailFormTabProps = {
   isLocked?: boolean;
   onSubmit?: (payload: RunFormData) => Promise<void> | void;
   onCancel?: () => void;
+  actionSlot?: ReactNode;
 };
 
 function RunDetailFormTab({
@@ -22,6 +24,7 @@ function RunDetailFormTab({
   isLocked = false,
   onSubmit,
   onCancel,
+  actionSlot,
 }: RunDetailFormTabProps) {
   const { restaurants: hookRestaurants, refetch } = useRestaurants();
   const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +65,7 @@ function RunDetailFormTab({
         initialValues={initialValues}
         onSubmit={onSubmit}
         onCancel={onCancel}
+        actionSlot={actionSlot}
       />
     </>
   );

@@ -3,7 +3,12 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
 import { CreateRunPanel, type RunFormData } from "..";
 import { RunViewPanel } from "..";
-import { createRun, completeRun, type RunStatus } from "../../../services/run";
+import {
+  createRun,
+  completeRun,
+  updateRun,
+  type RunStatus,
+} from "../../../services/run";
 import { getDecodedToken } from "../../../services/auth";
 import { confirmToast } from "../../../components/toast/confirmToast";
 import { toast } from "sonner";
@@ -49,9 +54,25 @@ function Runs() {
     () => new Set(orders.map((order) => order.foodRun)),
     [orders],
   );
+  const currentUserId = useMemo(() => {
+    try {
+      return getDecodedToken().user_id;
+    } catch {
+      return null;
+    }
+  }, []);
+  const myRuns = useMemo(() => {
+    if (currentUserId === null) {
+      return [];
+    }
+
+    return enrichedRuns.filter(
+      (run) => Number(run.organizerId) === Number(currentUserId),
+    );
+  }, [currentUserId, enrichedRuns]);
 
   const sortedRuns = useMemo(() => {
-    return [...enrichedRuns].sort((a, b) => {
+    return [...myRuns].sort((a, b) => {
       const scoreA = STATUS_RANK[a.status];
       const scoreB = STATUS_RANK[b.status];
       if (scoreA !== scoreB) {
@@ -61,23 +82,19 @@ function Runs() {
       const timeB = b.deadline ? new Date(b.deadline).getTime() : 0;
       return timeB - timeA;
     });
-  }, [enrichedRuns]);
+  }, [myRuns]);
 
   const activeRun =
     routeRunId !== undefined
-      ? enrichedRuns.find((run) => run.id === routeRunId)
+      ? myRuns.find((run) => run.id === routeRunId)
       : undefined;
-  const currentUserId = useMemo(() => {
-    try {
-      return getDecodedToken().user_id;
-    } catch {
-      return null;
-    }
-  }, []);
   const canCompleteRun =
     Boolean(activeRun) &&
     Number(activeRun?.organizerId) === Number(currentUserId) &&
     activeRun?.status !== "COMPLETED";
+  const canEditRun =
+    Boolean(activeRun) &&
+    Number(activeRun?.organizerId) === Number(currentUserId);
 
   useEffect(() => {
     if (isEditingRoute) {
@@ -97,12 +114,12 @@ function Runs() {
   }, [isEditingRoute, location.state, navigate]);
 
   useEffect(() => {
-    if (routeRunId !== undefined && enrichedRuns.length > 0 && !activeRun) {
+    if (routeRunId !== undefined && myRuns.length > 0 && !activeRun) {
       navigate("/runs", { replace: true });
     }
-  }, [activeRun, navigate, routeRunId, enrichedRuns]);
+  }, [activeRun, myRuns.length, navigate, routeRunId]);
 
-  const handleSubmitRun = async (payload: RunFormData) => {
+  const handleCreateRun = async (payload: RunFormData) => {
     const createdRun = await createRun({
       name: payload.name,
       description: "",
@@ -113,8 +130,27 @@ function Runs() {
 
     if (!createdRun.id) throw new Error("Created run is missing an id");
 
+    await refetchRuns();
+
     toast.success("Run created successfully!");
     navigate("/runs");
+  };
+
+  const handleUpdateRun = async (payload: RunFormData) => {
+    if (!activeRun) {
+      return;
+    }
+
+    await updateRun(activeRun.id, {
+      name: payload.name,
+      description: activeRun.description ?? "",
+      restaurant_id: payload.restaurantId,
+      deadline: payload.deadline,
+      status: activeRun.status,
+    });
+
+    await refetchRuns();
+    toast.success("Run updated successfully!");
   };
 
   const handleOpenCreatePanel = () => {
@@ -164,7 +200,8 @@ function Runs() {
     }
   };
 
-  const isRunLocked = isEditingRoute && activeRun?.status === "COMPLETED";
+  const isRunLocked =
+    isEditingRoute && (!canEditRun || activeRun?.status === "COMPLETED");
   const disableCreateButton = isCreateOpen || isEditingRoute;
 
   return (
@@ -175,7 +212,7 @@ function Runs() {
           <RunViewPanel
             run={activeRun}
             isLocked={isRunLocked}
-            onSubmit={isRunLocked ? undefined : handleSubmitRun}
+            onSubmit={isRunLocked ? undefined : handleUpdateRun}
             onClose={handleClosePanel}
             actionSlot={
               canCompleteRun ? (
@@ -193,7 +230,7 @@ function Runs() {
         ) : isCreateOpen ? (
           <CreateRunPanel
             mode="create"
-            onSubmit={handleSubmitRun}
+            onSubmit={handleCreateRun}
             onClose={handleClosePanel}
           />
         ) : (
