@@ -153,7 +153,7 @@ function Dashboard() {
           });
 
     toast.success(`Order #${order.id} has been saved.`);
-    navigate(`/my-order-history/${order.id}`);
+    navigate(`/order/${order.id}`);
   };
 
   const closeMenuDetail = () => {

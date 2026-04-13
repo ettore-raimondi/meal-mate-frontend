@@ -24,8 +24,7 @@ function App() {
         />
         <Route path="/runs" element={<Runs />} />
         <Route path="/runs/:runId" element={<Runs />} />
-        <Route path="/my-order-history" element={<Orders />} />
-        <Route path="/my-order-history/:orderId" element={<OrderDetail />} />
+        <Route path="/order" element={<Orders />} />
         <Route path="/order/:orderId" element={<OrderDetail />} />
         <Route path="/restaurants" element={<Restaurants />} />
         <Route
